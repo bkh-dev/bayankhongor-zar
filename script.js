@@ -995,6 +995,18 @@
         return data;
     }
 
+    async function deleteAdFromSupabase(adId) {
+        const { error } = await supabaseClient
+            .from("ads")
+            .delete()
+            .eq("id", adId);
+
+        if (error) {
+            console.error("Supabase delete error:", error);
+            throw error;
+        }
+    }
+
     async function handleSubmitAd() {
         const seller = el.sellerInput.value.trim() || state.currentUser.trim();
         const phone = el.phoneInput.value.trim();
@@ -1186,13 +1198,21 @@
         el.deleteModal.classList.remove("show");
     }
 
-    function deleteAd(adId) {
-        state.ads = state.ads.filter((a) => Number(a.id) !== Number(adId));
-        state.favorites.delete(Number(adId));
-        state.compared.delete(Number(adId));
-        saveAll();
-        renderAds();
-        showToast("Зар устгагдлаа.", "success");
+    async function deleteAd(adId) {
+        try {
+            await deleteAdFromSupabase(adId);
+
+            state.ads = state.ads.filter((a) => String(a.id) !== String(adId));
+            state.favorites.delete(Number(adId));
+            state.compared.delete(Number(adId));
+
+            saveAll();
+            renderAds();
+            showToast("Зар устгагдлаа.", "success");
+        } catch (error) {
+            console.error("deleteAd error:", error);
+            showToast("Supabase устгал дээр алдаа гарлаа.", "error");
+        }
     }
 
     // -------------------------
@@ -1682,9 +1702,9 @@
         el.closeDeleteModal.addEventListener("click", closeDeleteModal);
         el.cancelDeleteBtn.addEventListener("click", closeDeleteModal);
 
-        el.confirmDeleteBtn.addEventListener("click", () => {
+        el.confirmDeleteBtn.addEventListener("click", async () => {
             if (state.pendingDeleteId != null) {
-                deleteAd(state.pendingDeleteId);
+                await deleteAd(state.pendingDeleteId);
             }
             closeDeleteModal();
         });
