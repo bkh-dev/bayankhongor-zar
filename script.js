@@ -235,8 +235,11 @@
     }
 
     function canManageAd(ad) {
-        if (state.currentRole === "viewer") return false;
-        if (state.currentRole === "admin") return true;
+        const role = String(state.currentRole || "").trim().toLowerCase();
+
+        if (role === "admin") return true;
+        if (role === "viewer" || !hasCurrentUser()) return false;
+
         return isMyAd(ad);
     }
 
