@@ -9,7 +9,7 @@
     const INBOX_KEY = "bayankhongor_inbox_messages";
     const UI_STATE_KEY = "bh_ui_state";
 
-    const SUPABASE_URL = "https://dtxrbjppxyggjkpvbdcu.supabase.co";
+    const SUPABASE_URL = "https://dtxrbjppxyggjkpybdcu.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_YGhtBnurAg3otWaBMXKjvQ_TQRQkvc9";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -933,6 +933,68 @@
         });
     }
 
+    async function insertAdToSupabase(ad) {
+        const payload = {
+            title: ad.title,
+            price: ad.price,
+            location: ad.location,
+            category: ad.category,
+            subcategory: ad.subcategory || null,
+            description: ad.description,
+            seller_name: ad.seller,
+            seller_phone: ad.phone,
+            status: ad.status,
+            vip: Boolean(ad.vip),
+            top: Boolean(ad.top),
+            views: Number(ad.views || 0),
+            images: Array.isArray(ad.images) ? ad.images : []
+        };
+
+        const { data, error } = await supabaseClient
+            .from("ads")
+            .insert(payload)
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Supabase insert error:", error);
+            throw error;
+        }
+
+        return data;
+    }
+
+    async function updateAdInSupabase(adId, ad) {
+        const payload = {
+            title: ad.title,
+            price: ad.price,
+            location: ad.location,
+            category: ad.category,
+            subcategory: ad.subcategory || null,
+            description: ad.description,
+            seller_name: ad.seller,
+            seller_phone: ad.phone,
+            status: ad.status,
+            vip: Boolean(ad.vip),
+            top: Boolean(ad.top),
+            images: Array.isArray(ad.images) ? ad.images : []
+        };
+
+        const { data, error } = await supabaseClient
+            .from("ads")
+            .update(payload)
+            .eq("id", adId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Supabase update error:", error);
+            throw error;
+        }
+
+        return data;
+    }
+
     async function handleSubmitAd() {
         const seller = el.sellerInput.value.trim() || state.currentUser.trim();
         const phone = el.phoneInput.value.trim();
@@ -961,53 +1023,99 @@
             newImages = await Promise.all(state.imageFiles.map(toDataUrl));
         }
 
-        if (state.editingAdId) {
-            const idx = state.ads.findIndex((a) => Number(a.id) === Number(state.editingAdId));
-            if (idx === -1) return;
+        try {
+            if (state.editingAdId) {
+                const idx = state.ads.findIndex((a) => String(a.id) === String(state.editingAdId));
+                if (idx === -1) return;
 
-            const old = state.ads[idx];
-            state.ads[idx] = {
-                ...old,
-                seller,
-                phone,
-                title,
-                price,
-                location,
-                category,
-                subcategory,
-                status,
-                description,
-                vip,
-                top,
-                images: newImages.length ? newImages : old.images
-            };
-            showToast("Зар амжилттай засагдлаа.", "success");
-        } else {
-            state.ads.unshift({
-                id: id(),
-                seller,
-                phone,
-                title,
-                price,
-                location,
-                category,
-                subcategory,
-                status,
-                description,
-                vip,
-                top,
-                views: 0,
-                createdAt: new Date().toISOString(),
-                images: newImages.length ? newImages : ["https://placehold.co/600x400?text=New+Ad"]
-            });
-            showToast("Шинэ зар нэмэгдлээ.", "success");
+                const old = state.ads[idx];
+
+                const updatedPayload = {
+                    seller,
+                    phone,
+                    title,
+                    price,
+                    location,
+                    category,
+                    subcategory,
+                    status,
+                    description,
+                    vip,
+                    top,
+                    views: Number(old.views || 0),
+                    images: newImages.length ? newImages : old.images
+                };
+
+                const updatedRow = await updateAdInSupabase(state.editingAdId, updatedPayload);
+
+                state.ads[idx] = {
+                    id: updatedRow.id,
+                    seller: updatedRow.seller_name || seller,
+                    phone: updatedRow.seller_phone || phone,
+                    title: updatedRow.title || title,
+                    price: Number(updatedRow.price || price),
+                    location: updatedRow.location || location,
+                    category: updatedRow.category || category,
+                    subcategory: updatedRow.subcategory || subcategory,
+                    status: updatedRow.status || status,
+                    description: updatedRow.description || description,
+                    vip: Boolean(updatedRow.vip),
+                    top: Boolean(updatedRow.top),
+                    views: Number(updatedRow.views || 0),
+                    createdAt: updatedRow.created_at || old.createdAt,
+                    images: Array.isArray(updatedRow.images) ? updatedRow.images : updatedPayload.images
+                };
+
+                showToast("Зар амжилттай засагдлаа.", "success");
+            } else {
+                const newAd = {
+                    seller,
+                    phone,
+                    title,
+                    price,
+                    location,
+                    category,
+                    subcategory,
+                    status,
+                    description,
+                    vip,
+                    top,
+                    views: 0,
+                    images: newImages.length ? newImages : ["https://placehold.co/600x400?text=New+Ad"]
+                };
+
+                const insertedRow = await insertAdToSupabase(newAd);
+
+                state.ads.unshift({
+                    id: insertedRow.id,
+                    seller: insertedRow.seller_name || seller,
+                    phone: insertedRow.seller_phone || phone,
+                    title: insertedRow.title || title,
+                    price: Number(insertedRow.price || price),
+                    location: insertedRow.location || location,
+                    category: insertedRow.category || category,
+                    subcategory: insertedRow.subcategory || subcategory,
+                    status: insertedRow.status || status,
+                    description: insertedRow.description || description,
+                    vip: Boolean(insertedRow.vip),
+                    top: Boolean(insertedRow.top),
+                    views: Number(insertedRow.views || 0),
+                    createdAt: insertedRow.created_at || new Date().toISOString(),
+                    images: Array.isArray(insertedRow.images) ? insertedRow.images : newAd.images
+                });
+
+                showToast("Шинэ зар нэмэгдлээ.", "success");
+            }
+
+            saveAll();
+            resetForm();
+            closeAddAdModal();
+            state.currentPage = 1;
+            renderAds();
+        } catch (error) {
+            console.error("handleSubmitAd error:", error);
+            showToast("Supabase хадгалалт дээр алдаа гарлаа.", "error");
         }
-
-        saveAll();
-        resetForm();
-        closeAddAdModal();
-        state.currentPage = 1;
-        renderAds();
     }
 
     function startEditAd(adId) {
