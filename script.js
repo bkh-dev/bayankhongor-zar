@@ -224,10 +224,14 @@
     function isMyAd(ad) {
         if (!hasCurrentUser()) return false;
 
-        const seller = String(ad.seller || "").trim().toLowerCase();
-        const current = String(state.currentUser || "").trim().toLowerCase();
+        const sellerName = String(ad.seller || "").trim().toLowerCase();
+        const sellerPhone = String(ad.phone || "").trim();
+        const currentName = String(state.currentUser || "").trim().toLowerCase();
 
-        return seller === current;
+        const sessionUser = getSessionUser();
+        const currentPhone = String(sessionUser?.phone || "").trim();
+
+        return sellerName === currentName || (sellerPhone && currentPhone && sellerPhone === currentPhone);
     }
 
     function canManageAd(ad) {
