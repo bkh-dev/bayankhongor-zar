@@ -235,12 +235,25 @@
     }
 
     function canManageAd(ad) {
+        if (!hasCurrentUser()) return false;
+
         const role = String(state.currentRole || "").trim().toLowerCase();
 
         if (role === "admin") return true;
-        if (role === "viewer" || !hasCurrentUser()) return false;
+        if (role === "viewer") return false;
 
-        return isMyAd(ad);
+        // seller эсвэл дээш role бол isMyAd шалгана
+        const sessionUser = getSessionUser();
+        const currentPhone = String(sessionUser?.phone || "").trim();
+        const currentName = String(state.currentUser || "").trim().toLowerCase();
+
+        const sellerPhone = String(ad.phone || "").trim();
+        const sellerName = String(ad.seller || "").trim().toLowerCase();
+
+        if (currentPhone && sellerPhone && currentPhone === sellerPhone) return true;
+        if (currentName && sellerName && currentName === sellerName) return true;
+
+        return false;
     }
 
     function isFavorite(adId) {
@@ -1138,7 +1151,7 @@
     }
 
     function startEditAd(adId) {
-        const ad = state.ads.find((a) => Number(a.id) === Number(adId));
+        const ad = state.ads.find((a) => String(a.id) === String(adId));
         if (!ad) return;
 
         state.editingAdId = ad.id;
@@ -1192,7 +1205,7 @@
     // Delete modal
     // -------------------------
     function openDeleteModal(adId) {
-        const ad = state.ads.find((x) => Number(x.id) === Number(adId));
+        const ad = state.ads.find((x) => String(x.id) === String(adId));
         if (!ad) return;
         state.pendingDeleteId = ad.id;
         el.deleteModalText.innerHTML = `<strong>${escapeHtml(ad.title)}</strong> зарыг устгах уу?`;
@@ -1773,8 +1786,26 @@
                 e.preventDefault();
                 e.stopPropagation();
 
-                const adForEdit = state.ads.find((a) => Number(a.id) === Number(editBtn.dataset.editId));
-                if (!adForEdit || !canManageAd(adForEdit)) {
+                const adForEdit = state.ads.find((a) => String(a.id) === String(editBtn.dataset.editId));
+                if (!adForEdit) {
+                    showToast("Зар олдсонгүй.", "error");
+                    return;
+                }
+
+                const sessionUser = getSessionUser();
+                const currentPhone = String(sessionUser?.phone || "").trim();
+                const currentName = String(state.currentUser || "").trim().toLowerCase();
+                const sellerPhone = String(adForEdit.phone || "").trim();
+                const sellerName = String(adForEdit.seller || "").trim().toLowerCase();
+                const role = String(state.currentRole || "").trim().toLowerCase();
+
+                const canEdit = role === "admin" ||
+                    (role !== "viewer" && (
+                        (currentPhone && sellerPhone && currentPhone === sellerPhone) ||
+                        (currentName && sellerName && currentName === sellerName)
+                    ));
+
+                if (!canEdit) {
                     showToast("Танд энэ зарыг засах эрх алга.", "error");
                     return;
                 }
@@ -1783,14 +1814,31 @@
                 return;
             }
 
-
             const deleteBtn = e.target.closest("[data-delete-id]");
             if (deleteBtn) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const adForDelete = state.ads.find((a) => Number(a.id) === Number(deleteBtn.dataset.deleteId));
-                if (!adForDelete || !canManageAd(adForDelete)) {
+                const adForDelete = state.ads.find((a) => String(a.id) === String(deleteBtn.dataset.deleteId));
+                if (!adForDelete) {
+                    showToast("Зар олдсонгүй.", "error");
+                    return;
+                }
+
+                const sessionUser = getSessionUser();
+                const currentPhone = String(sessionUser?.phone || "").trim();
+                const currentName = String(state.currentUser || "").trim().toLowerCase();
+                const sellerPhone = String(adForDelete.phone || "").trim();
+                const sellerName = String(adForDelete.seller || "").trim().toLowerCase();
+                const role = String(state.currentRole || "").trim().toLowerCase();
+
+                const canDelete = role === "admin" ||
+                    (role !== "viewer" && (
+                        (currentPhone && sellerPhone && currentPhone === sellerPhone) ||
+                        (currentName && sellerName && currentName === sellerName)
+                    ));
+
+                if (!canDelete) {
                     showToast("Танд энэ зарыг устгах эрх алга.", "error");
                     return;
                 }
