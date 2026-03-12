@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Баянхонгор Аймгийн Зар</title>
+    <link rel="icon" href="data:,">
 
     <style>
         :root {
@@ -1624,113 +1625,218 @@
             }
 
             @media (max-width: 700px) {
-
-                body.dark-mode .mobile-all-categories-btn,
-                body.dark-mode .mobile-category-link {
-                    background: #1e293b;
-                    color: #e5e7eb;
-                    border-color: #334155;
+                body {
+                    overflow-x: hidden;
                 }
-            }
 
-            .top-category-item,
-            .top-category-item-expandable {
-                display: block;
-                cursor: pointer;
-                padding: 0;
-                border-radius: 0;
-                transition: 0.2s ease;
-                background: transparent;
-                border: none;
-                min-height: auto;
-                box-shadow: none;
-            }
+                header {
+                    display: block;
+                    padding: 12px 14px;
+                }
 
-            .top-category-main {
-                display: flex;
-                align-items: flex-start;
-                gap: 10px;
-                padding: 0;
-                background: transparent;
-                text-align: left;
-            }
+                .header-inner {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 10px;
+                }
 
-            .top-category-icon {
-                font-size: 30px;
-                line-height: 1;
-                width: 28px;
-                text-align: center;
-                flex-shrink: 0;
-                margin-top: 2px;
-            }
+                .brand-wrap {
+                    width: 100%;
+                }
 
-            .top-category-text {
-                font-size: 15px;
-                font-weight: 800;
-                line-height: 1.25;
-                color: #111827;
-            }
+                .logo {
+                    font-size: 26px;
+                }
 
-            .inline-subcategory-panel {
-                margin-left: 0;
-                margin-top: 12px;
-                padding-top: 10px;
-            }
+                .brand-sub {
+                    font-size: 12px;
+                }
 
-            .ads {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
+                .top-right {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 8px;
+                    width: 100%;
+                }
 
-            .list-section-title {
-                font-size: 18px;
-                margin-bottom: 10px;
-            }
+                .my-ads-btn,
+                .post-ad-btn {
+                    width: 100%;
+                    min-height: 42px;
+                    padding: 10px 12px;
+                    font-size: 13px;
+                }
 
-            .image-wrap {
-                height: 132px;
-            }
+                .container {
+                    max-width: 100%;
+                    margin: 14px auto;
+                    padding: 0 12px 24px;
+                }
 
-            .ad-content {
-                padding: 10px;
-            }
+                .current-user-box,
+                .profile-card,
+                .search-box,
+                .results-header,
+                .add-form,
+                .empty-box,
+                .stat-card,
+                .top-categories {
+                    border-radius: 16px;
+                }
 
-            .ad-title {
-                font-size: 14px;
-                min-height: 34px;
-                margin-bottom: 6px;
-            }
+                .current-user-row,
+                .search-row,
+                .form-row {
+                    grid-template-columns: 1fr;
+                    gap: 8px;
+                }
 
-            .price {
-                font-size: 16px;
-                margin-bottom: 4px;
-            }
+                .form-label {
+                    text-align: left;
+                    padding-top: 0;
+                }
 
-            .location,
-            .category,
-            .description,
-            .meta-row {
-                font-size: 12px;
-            }
+                .clean-form-actions {
+                    padding-left: 0;
+                    flex-direction: column;
+                }
 
-            .description {
-                min-height: 28px;
-                margin-bottom: 8px;
-            }
+                .stats-grid {
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                }
 
-            .card-actions {
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
+                .quick-filters {
+                    grid-column: 1 / -1;
+                    gap: 8px;
+                    margin-bottom: 10px;
+                }
 
-            .pagination,
-            #pageInfo {
-                display: none;
-            }
+                .quick-filter-btn {
+                    padding: 9px 12px;
+                    font-size: 13px;
+                }
 
-            footer {
-                display: block;
-                margin-top: 20px;
+                .search-box {
+                    padding: 14px;
+                }
+
+                .search-row {
+                    grid-template-columns: 1fr;
+                }
+
+                .top-categories {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 12px;
+                    padding: 14px;
+                    background: #f3f4f6;
+                    border: 1px solid #dbe3ee;
+                    margin-bottom: 16px;
+                }
+
+                .top-category-item,
+                .top-category-item-expandable {
+                    display: block;
+                    padding: 10px;
+                    border-radius: 14px;
+                    background: white;
+                    border: 1px solid #e5e7eb;
+                    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+                    min-height: auto;
+                }
+
+                .top-category-main {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 8px;
+                    text-align: center;
+                    padding: 0;
+                }
+
+                .top-category-icon {
+                    width: auto;
+                    font-size: 26px;
+                    margin-top: 0;
+                }
+
+                .top-category-text {
+                    font-size: 14px;
+                    line-height: 1.25;
+                }
+
+                .inline-subcategory-panel {
+                    margin-left: 0;
+                    margin-top: 10px;
+                    padding-top: 10px;
+                }
+
+                .inline-subcategory-panel.show {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    align-items: flex-start;
+                }
+
+                .results-header {
+                    padding: 14px 16px;
+                }
+
+                .results-title {
+                    font-size: 22px;
+                }
+
+                .ads {
+                    grid-template-columns: 1fr;
+                    gap: 12px;
+                }
+
+                .image-wrap {
+                    height: 190px;
+                }
+
+                .ad-content {
+                    padding: 12px;
+                }
+
+                .ad-title {
+                    font-size: 15px;
+                    min-height: auto;
+                    margin-bottom: 6px;
+                }
+
+                .price {
+                    font-size: 18px;
+                    margin-bottom: 4px;
+                }
+
+                .location,
+                .category,
+                .description,
+                .meta-row {
+                    font-size: 12px;
+                }
+
+                .description {
+                    min-height: auto;
+                    margin-bottom: 8px;
+                }
+
+                .card-actions {
+                    grid-template-columns: 1fr;
+                    gap: 8px;
+                }
+
+                .pagination,
+                #pageInfo {
+                    display: none;
+                }
+
+                footer {
+                    margin-top: 20px;
+                    padding: 16px;
+                }
             }
 
             body.dark-mode .mobile-topbar,
@@ -2282,6 +2388,7 @@
                 </div>
             </div>
 
+            <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
             <script src="script.js"></script>
 </body>
 

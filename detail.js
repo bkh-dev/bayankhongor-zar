@@ -2,6 +2,9 @@ const ADS_KEY = "bh_ads";
 const FAVORITES_KEY = "bh_favorites";
 const THEME_KEY = "bh_theme";
 const INBOX_KEY = "bayankhongor_inbox_messages";
+const SUPABASE_URL = "https://dtxrbjppxyggjkpvbdcu.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_YGhtBnurAg3otWaBMXKjvQ_TQRQkvc9";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const SESSION_KEY = "bh_session_user";
 const CURRENT_USER_KEY = "bh_current_user";
 
@@ -525,6 +528,7 @@ function renderAdDetail() {
   const mainImage = images[0] || "";
   const specItems = [
     ["Ангилал", ad.category || "Бусад"],
+    ["Төрөл", ad.subcategory || "-"],
     ["Статус", ad.status || "Идэвхтэй"],
     ["Байршил", ad.location || "Байршилгүй"],
     ["Зар оруулагч", ad.seller || "Хэрэглэгч"],

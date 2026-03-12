@@ -8,6 +8,11 @@
     const ADS_KEY = "bh_ads";
     const INBOX_KEY = "bayankhongor_inbox_messages";
     const UI_STATE_KEY = "bh_ui_state";
+
+    const SUPABASE_URL = "https://dtxrbjppxyggjkpvbdcu.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_YGhtBnurAg3otWaBMXKjvQ_TQRQkvc9";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const FAVORITES_KEY = "bh_favorites";
     const COMPARED_KEY = "bh_compared";
     const CURRENT_USER_KEY = "bh_current_user";
@@ -1245,14 +1250,50 @@
         });
     }
 
-    function loadAll() {
+    async function loadAdsFromSupabase() {
+        const { data, error } = await supabaseClient
+            .from("ads")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) {
+            console.error("Supabase ads load error:", error);
+            return null;
+        }
+
+        return (data || []).map((ad) => ({
+            id: ad.id,
+            title: ad.title,
+            price: Number(ad.price || 0),
+            location: ad.location || "",
+            category: ad.category || "",
+            subcategory: ad.subcategory || "",
+            description: ad.description || "",
+            seller: ad.seller_name || "",
+            phone: ad.seller_phone || "",
+            status: ad.status || "Идэвхтэй",
+            vip: Boolean(ad.vip),
+            top: Boolean(ad.top),
+            views: Number(ad.views || 0),
+            createdAt: ad.created_at || new Date().toISOString(),
+            images: Array.isArray(ad.images) ? ad.images : []
+        }));
+    }
+
+    async function loadAll() {
         const legacyAds = localStorage.getItem("bayankhongor_ads");
         if (!localStorage.getItem(ADS_KEY) && legacyAds) {
             localStorage.setItem(ADS_KEY, legacyAds);
         }
 
+        const supabaseAds = await loadAdsFromSupabase();
         const ads = getStorageJson(ADS_KEY, []);
-        state.ads = ads.length ? ads : seedAds();
+
+        if (supabaseAds && supabaseAds.length) {
+            state.ads = supabaseAds;
+        } else {
+            state.ads = ads.length ? ads : seedAds();
+        }
 
         state.ads = state.ads.map((ad) => {
             const normalizedCategory = String(ad.category || "").trim();
@@ -1671,8 +1712,8 @@
         });
     }
 
-    function init() {
-        loadAll();
+    async function init() {
+        await loadAll();
         syncCurrentUserUI();
 
         if (el.roleSelect) {
