@@ -2138,97 +2138,6 @@
                 </div>
             </div>
 
-            <div id="carSpecsContainer"
-                style="display: none; border: 1px solid #f3f4f6; padding: 15px; border-radius: 10px; background: #fafafa; margin-bottom: 15px;">
-
-                <div class="spec-row">
-                    <label>Брэнд:<sup>*</sup></label>
-                    <select id="carBrandInput">
-                        <option value="">Сонгох</option>
-                        <option value="Toyota">Toyota</option>
-                        <option value="Lexus">Lexus</option>
-                        <option value="Hyundai">Hyundai</option>
-                        <option value="Kia">Kia</option>
-                        <option value="Nissan">Nissan</option>
-                    </select>
-                </div>
-
-                <div class="spec-row">
-                    <label>Нөхцөл:<sup>*</sup></label>
-                    <select id="carConditionInput">
-                        <option value="">Сонгох</option>
-                        <option value="Шинэ">Шинэ</option>
-                        <option value="Дугаар авсан">Дугаар авсан</option>
-                        <option value="Дугаар аваагүй">Дугаар аваагүй</option>
-                    </select>
-                </div>
-
-                <div class="spec-row">
-                    <label>Төрөл:<sup>*</sup></label>
-                    <select id="carTypeInput">
-                        <option value="">Сонгох</option>
-                        <option value="Жийп">Жийп</option>
-                        <option value="Суудлын">Суудлын</option>
-                        <option value="Ачааны">Ачааны</option>
-                    </select>
-                </div>
-
-                <div class="spec-row">
-                    <label>Хүрд:<sup>*</sup></label>
-                    <select id="carSteeringInput">
-                        <option value="">Сонгох</option>
-                        <option value="Зөв">Зөв</option>
-                        <option value="Буруу">Буруу</option>
-                    </select>
-                </div>
-
-                <div class="spec-row">
-                    <label>Үйлдвэрлэсэн он:<sup>*</sup></label>
-                    <select id="carYearInput">
-                        <option value="">Сонгох</option>
-                        <option value="2024">2024</option>
-                        <option value="2023">2023</option>
-                        <option value="2022">2022</option>
-                        <option value="2021">2021</option>
-                    </select>
-                </div>
-
-                <div class="spec-row">
-                    <label>Хөдөлгүүр:<sup>*</sup></label>
-                    <select id="carFuelInput">
-                        <option value="">Сонгох</option>
-                        <option value="Бензин">Бензин</option>
-                        <option value="Дизель">Дизель</option>
-                        <option value="Хайбрид">Хайбрид</option>
-                        <option value="Цахилгаан">Цахилгаан</option>
-                    </select>
-                </div>
-
-                <div class="spec-row">
-                    <label>Хурдны хайрцаг:<sup>*</sup></label>
-                    <select id="carGearboxInput">
-                        <option value="">Сонгох</option>
-                        <option value="Автомат">Автомат</option>
-                        <option value="Механик">Механик</option>
-                    </select>
-                </div>
-
-                <div class="spec-row">
-                    <label>Явсан:<sup>*</sup></label>
-                    <div class="input-with-unit" style="position: relative; flex: 1;">
-                        <input type="number" id="carMileageInput" style="width: 100%; padding-right: 35px;">
-                        <span
-                            style="position: absolute; right: 10px; top: 10px; color: #999; font-size: 12px;">КМ</span>
-                    </div>
-                </div>
-
-                <div class="spec-row">
-                    <label>Арлын дугаар:</label>
-                    <input type="text" id="carPlateInput" placeholder="VIN number">
-                </div>
-
-            </div>
-
             <div class="top-category-item" data-category="Автомашин">
                 <span class="top-category-icon">🚗</span>
                 <span class="top-category-text">Автомашин</span>
@@ -2361,76 +2270,192 @@
                                         </div>
                                     </div>
 
-                                    <div id="carSpecsContainer"
-                                        style="display: none; border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px;">
+                                    <div id="carSpecsSection" style="display:none; border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px;">
+                                        <div class="spec-row">
+                                            <label>Сонгох:<sup>*</sup></label>
+                                            <select id="carBrandInput">
+                                                <option value="">Сонгох</option>
+                                                <option value="Toyota">Toyota</option>
+                                                <option value="Lexus">Lexus</option>
+                                                <option value="Hyundai">Hyundai</option>
+                                                <option value="Kia">Kia</option>
+                                                <option value="Nissan">Nissan</option>
+                                                <option value="Subaru">Subaru</option>
+                                                <option value="Mitsubishi">Mitsubishi</option>
+                                                <option value="Mercedes-Benz">Mercedes-Benz</option>
+                                                <option value="BMW">BMW</option>
+                                                <option value="Audi">Audi</option>
+                                                <option value="Volkswagen">Volkswagen</option>
+                                                <option value="Бусад">Бусад</option>
+                                            </select>
+                                        </div>
 
-                                        <div class="spec-row"><label>Сонгох:<sup>*</sup></label><select
-                                                id="carBrandInput">
+                                        <div class="spec-row">
+                                            <label>Нөхцөл:<sup>*</sup></label>
+                                            <select id="carConditionInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Нөхцөл:<sup>*</sup></label><select
-                                                id="carConditionInput">
+                                                <option value="Шинэ">Шинэ</option>
+                                                <option value="Хуучин">Хуучин</option>
+                                                <option value="Дугаар авсан">Дугаар авсан</option>
+                                                <option value="Дугаар аваагүй">Дугаар аваагүй</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Төрөл:<sup>*</sup></label>
+                                            <select id="carTypeInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Төрөл:<sup>*</sup></label><select
-                                                id="carTypeInput">
+                                                <option value="Жийп">Жийп</option>
+                                                <option value="Суудлын">Суудлын</option>
+                                                <option value="Микро">Микро</option>
+                                                <option value="Автобус">Автобус</option>
+                                                <option value="Ачааны">Ачааны</option>
+                                                <option value="Бусад">Бусад</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Хаалга:<sup>*</sup></label>
+                                            <select id="carDoorInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Хаалга:<sup>*</sup></label><select
-                                                id="carDoorInput">
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                                <option value="5">5</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Хүрд:<sup>*</sup></label>
+                                            <select id="carSteeringInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Хүрд:<sup>*</sup></label><select
-                                                id="carSteeringInput">
+                                                <option value="Зөв">Зөв</option>
+                                                <option value="Буруу">Буруу</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Хөтлөгч:<sup>*</sup></label>
+                                            <select id="carDriveInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Хөтлөгч:<sup>*</sup></label><select
-                                                id="carDriveInput">
+                                                <option value="2WD">2WD</option>
+                                                <option value="4WD">4WD</option>
+                                                <option value="AWD">AWD</option>
+                                                <option value="FWD">FWD</option>
+                                                <option value="RWD">RWD</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Үйлдвэрлэсэн он:<sup>*</sup></label>
+                                            <select id="carYearInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Үйлдвэрлэсэн он:<sup>*</sup></label><select
-                                                id="carYearInput">
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Орж ирсэн он:<sup>*</sup></label>
+                                            <select id="carImportedYearInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Орж ирсэн он:<sup>*</sup></label><select
-                                                id="carImportedYearInput">
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Хөдөлгүүр:<sup>*</sup></label>
+                                            <select id="carFuelInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Хөдөлгүүр:<sup>*</sup></label><select
-                                                id="carFuelInput">
+                                                <option value="Бензин">Бензин</option>
+                                                <option value="Дизель">Дизель</option>
+                                                <option value="Хайбрид">Хайбрид</option>
+                                                <option value="Цахилгаан">Цахилгаан</option>
+                                                <option value="Газ">Газ</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Мотор багтаамж:<sup>*</sup></label>
+                                            <select id="carEngineCapacityInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Мотор багтаамж:<sup>*</sup></label><select
-                                                id="carEngineCapacityInput">
+                                                <option value="0.6">0.6</option>
+                                                <option value="0.8">0.8</option>
+                                                <option value="1.0">1.0</option>
+                                                <option value="1.2">1.2</option>
+                                                <option value="1.3">1.3</option>
+                                                <option value="1.5">1.5</option>
+                                                <option value="1.6">1.6</option>
+                                                <option value="1.8">1.8</option>
+                                                <option value="2.0">2.0</option>
+                                                <option value="2.2">2.2</option>
+                                                <option value="2.4">2.4</option>
+                                                <option value="2.5">2.5</option>
+                                                <option value="2.7">2.7</option>
+                                                <option value="3.0">3.0</option>
+                                                <option value="3.5">3.5</option>
+                                                <option value="4.0">4.0</option>
+                                                <option value="4.6">4.6</option>
+                                                <option value="5.0+">5.0+</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Хурдны хайрцаг:<sup>*</sup></label>
+                                            <select id="carGearboxInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Хурдны хайрцаг:<sup>*</sup></label><select
-                                                id="carGearboxInput">
+                                                <option value="Автомат">Автомат</option>
+                                                <option value="Механик">Механик</option>
+                                                <option value="CVT">CVT</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Дотор өнгө:<sup>*</sup></label>
+                                            <select id="carInteriorColorInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Дотор өнгө:<sup>*</sup></label><select
-                                                id="carInteriorColorInput">
-                                                <option value="">Сонгох</option>
-                                            </select></div>
+                                                <option value="Хар">Хар</option>
+                                                <option value="Саарал">Саарал</option>
+                                                <option value="Бор">Бор</option>
+                                                <option value="Цагаан">Цагаан</option>
+                                                <option value="Бусад">Бусад</option>
+                                            </select>
+                                        </div>
 
                                         <div class="spec-row">
                                             <label>Явсан:<sup>*</sup></label>
                                             <div class="input-unit-wrapper">
-                                                <input type="text" id="carMileageInput">
+                                                <input type="text" id="carMileageInput" inputmode="numeric" placeholder="Жишээ: 120000">
                                                 <span class="unit-text">КМ</span>
                                             </div>
                                         </div>
 
-                                        <div class="spec-row"><label>Лизинг:<sup>*</sup></label><select
-                                                id="carLeasingInput">
+                                        <div class="spec-row">
+                                            <label>Лизинг:<sup>*</sup></label>
+                                            <select id="carLeasingInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Өнгө:<sup>*</sup></label><select
-                                                id="carColorInput">
+                                                <option value="Тийм">Тийм</option>
+                                                <option value="Үгүй">Үгүй</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Өнгө:<sup>*</sup></label>
+                                            <select id="carColorInput">
                                                 <option value="">Сонгох</option>
-                                            </select></div>
-                                        <div class="spec-row"><label>Арлын дугаар:</label><input type="text"
-                                                id="carPlateInput"></div>
+                                                <option value="Хар">Хар</option>
+                                                <option value="Цагаан">Цагаан</option>
+                                                <option value="Мөнгөлөг">Мөнгөлөг</option>
+                                                <option value="Саарал">Саарал</option>
+                                                <option value="Улаан">Улаан</option>
+                                                <option value="Цэнхэр">Цэнхэр</option>
+                                                <option value="Ногоон">Ногоон</option>
+                                                <option value="Шар">Шар</option>
+                                                <option value="Бусад">Бусад</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="spec-row">
+                                            <label>Арлын дугаар</label>
+                                            <input type="text" id="carPlateInput" placeholder="VIN / Арлын дугаар">
+                                        </div>
                                     </div>
 
                                     <div class="form-row">

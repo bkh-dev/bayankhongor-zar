@@ -1078,6 +1078,23 @@
         }
     }
 
+    function fillYearSelect(selectEl, startYear, endYear) {
+        if (!selectEl) return;
+        // If already has options beyond the placeholder, don't duplicate
+        if (selectEl.options && selectEl.options.length > 1) return;
+
+        const start = Number(startYear);
+        const end = Number(endYear);
+        if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+
+        for (let y = end; y >= start; y -= 1) {
+            const opt = document.createElement("option");
+            opt.value = String(y);
+            opt.textContent = String(y);
+            selectEl.appendChild(opt);
+        }
+    }
+
     function toDataUrl(file) {
         return new Promise((resolve, reject) => {
             const fr = new FileReader();
@@ -2345,6 +2362,11 @@
         if (el.roleSelect) {
             el.roleSelect.value = state.currentRole || "seller";
         }
+
+        // Populate car year dropdowns (Автомашин form)
+        const currentYear = new Date().getFullYear();
+        fillYearSelect(el.carYearInput, currentYear - 45, currentYear);
+        fillYearSelect(el.carImportedYearInput, currentYear - 45, currentYear);
 
         bindEvents();
         document.querySelectorAll(".quick-filter-btn").forEach((n) => n.classList.remove("active"));
