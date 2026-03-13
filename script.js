@@ -1378,6 +1378,57 @@
         }
     }
 
+    function openForgotPasswordModal(event) {
+        if (event) event.preventDefault();
+        const authModal = document.getElementById("authModal");
+        if (authModal) authModal.classList.remove("show");
+        const resetModal = document.getElementById("forgotPasswordModal");
+        if (resetModal) resetModal.classList.add("show");
+    }
+
+    function closeForgotPasswordModal() {
+        const resetModal = document.getElementById("forgotPasswordModal");
+        if (resetModal) resetModal.classList.remove("show");
+    }
+
+    async function handlePasswordReset() {
+        const email = document.getElementById("resetEmailInput").value.trim();
+        const newPass = document.getElementById("resetNewPassword").value;
+        const confirmPass = document.getElementById("resetConfirmPassword").value;
+
+        if (!email) return alert("Бүртгэлтэй имэйл хаягаа оруулна уу.");
+        if (newPass.length < 6) return alert("Шинэ нууц үг багадаа 6 тэмдэгт байх ёстой.");
+        if (newPass !== confirmPass) return alert("Нууц үгүүд зөрж байна.");
+
+        try {
+            const { data: userProfile, error: findError } = await supabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('phone', email)
+                .single();
+
+            if (findError || !userProfile) {
+                alert("Энэ хаяг бүртгэлгүй байна.");
+                return;
+            }
+
+            const { error: updateError } = await supabaseClient
+                .from('profiles')
+                .update({ password: newPass })
+                .eq('id', userProfile.id);
+
+            if (updateError) throw updateError;
+
+            alert("Нууц үг амжилттай шинэчлэгдлээ.");
+            closeForgotPasswordModal();
+            if (document.getElementById("authModal")) {
+                document.getElementById("authModal").classList.add("show");
+            }
+        } catch (error) {
+            alert("Алдаа гарлаа: " + error.message);
+        }
+    }
+
     function startEditAd(adId) {
         const ad = state.ads.find((a) => String(a.id) === String(adId));
         if (!ad) return;
