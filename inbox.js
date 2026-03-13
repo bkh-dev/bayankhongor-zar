@@ -21,45 +21,59 @@ async function loadMessages() {
     const listEl = document.getElementById("messageList");
     const loadingEl = document.getElementById("loading");
 
+    // ШАЛГАХ 1: Таны нэвтэрсэн нэр юу байна?
+    console.log("Миний нэр (localStorage-аас):", myName);
+
     if (!myName) {
-        listEl.innerHTML = `<div class="no-msg">Та нэвтэрч байж мессежээ харна уу.</div>`;
+        listEl.innerHTML = `<div class="no-msg">Та нэвтрээгүй байна. LocalStorage шалгана уу.</div>`;
         return;
     }
 
     loadingEl.style.display = "block";
-    listEl.innerHTML = "";
 
     try {
-        // Supabase-ээс мессежийг татахдаа тухайн зарын нэрийг (title) хамт татаж авна
-        let query = supabaseClient.from("messages").select(`*, ads(title)`);
-
-        if (currentTab === 'received') {
-            query = query.eq("receiver_name", myName);
-        } else {
-            query = query.eq("sender_name", myName);
-        }
-
-        const { data, error } = await query.order("created_at", { ascending: false });
+        // ШАЛГАХ 2: Эхлээд шүүлтүүргүйгээр бүх мессежийг татаж үзэх
+        console.log("Supabase-ээс өгөгдөл татаж байна...");
+        let { data, error } = await supabaseClient
+            .from("messages")
+            .select(`*, ads(title)`);
 
         if (error) throw error;
 
-        if (!data || data.length === 0) {
-            listEl.innerHTML = `<div class="no-msg">Танд мессеж байхгүй байна.</div>`;
+        console.log("Нийт олдсон мессежүүд (бүх хэрэглэгчийн):", data);
+
+        // ШАЛГАХ 3: Таны нэрээр шүүх (Гар аргаар)
+        const myMessages = data.filter(msg => {
+            if (currentTab === 'received') {
+                return String(msg.receiver_name).trim() === String(myName).trim();
+            } else {
+                return String(msg.sender_name).trim() === String(myName).trim();
+            }
+        });
+
+        console.log("Шүүж дууссаны дараах мессежүүд:", myMessages);
+
+        if (myMessages.length === 0) {
+            listEl.innerHTML = `<div class="no-msg">
+                Танд мессеж олдсонгүй.<br>
+                <small>Таны нэр: "${myName}"</small><br>
+                <small>Supabase-д байгаа нэрүүдтэй таарахгүй байна.</small>
+            </div>`;
         } else {
-            listEl.innerHTML = data.map(msg => `
+            listEl.innerHTML = myMessages.map(msg => `
                 <div class="message-card">
                     <div class="msg-header">
-                        <span>${currentTab === 'received' ? 'Илгээгч: ' + msg.sender_name : 'Хүлээн авагч: ' + msg.receiver_name}</span>
+                        <span>${currentTab === 'received' ? 'Хэнээс: ' + msg.sender_name : 'Хэнд: ' + msg.receiver_name}</span>
                         <span>${new Date(msg.created_at).toLocaleString('mn-MN')}</span>
                     </div>
-                    <a href="detail.html?id=${msg.ad_id}" class="msg-title">Зарын нэр: ${msg.ads?.title || "Устсан зар"}</a>
+                    <div class="msg-title">Зарын нэр: ${msg.ads?.title || "Гарчиггүй зар"}</div>
                     <div class="msg-text">${msg.message_text}</div>
                 </div>
             `).join("");
         }
     } catch (err) {
-        console.error(err);
-        listEl.innerHTML = `<div class="no-msg">Алдаа гарлаа: ${err.message}</div>`;
+        console.error("Алдаа гарлаа:", err);
+        listEl.innerHTML = `<div class="no-msg">Алдаа: ${err.message}</div>`;
     } finally {
         loadingEl.style.display = "none";
     }
