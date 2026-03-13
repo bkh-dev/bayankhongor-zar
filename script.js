@@ -1228,8 +1228,8 @@
     }
 
     async function handleSubmitAd() {
-        const seller = el.sellerInput.value.trim() || state.currentUser.trim();
         const sessionUser = getSessionUser();
+        const seller = el.sellerInput.value.trim() || state.currentUser || "";
         const phone = String(sessionUser?.phone || el.phoneInput.value || "").trim();
         const title = el.titleInput.value.trim();
         const price = Number(el.priceInput.value.replaceAll(",", "").trim());
@@ -1241,154 +1241,108 @@
         const vip = el.vipInput.checked;
         const top = el.topInput.checked;
 
-        const carSpecs = category === "Автомашин"
-            ? {
-                brand: el.carBrandInput.value,
-                condition: el.carConditionInput.value,
-                type: el.carTypeInput.value,
-                door: el.carDoorInput.value,
-                steering: el.carSteeringInput.value,
-                drive: el.carDriveInput.value,
-                year: el.carYearInput.value,
-                importedYear: el.carImportedYearInput.value,
-                fuel: el.carFuelInput.value,
-                engineCapacity: el.carEngineCapacityInput.value,
-                gearbox: el.carGearboxInput.value,
-                interiorColor: el.carInteriorColorInput.value,
-                mileage: el.carMileageInput.value,
-                leasing: el.carLeasingInput.value,
-                color: el.carColorInput.value,
-                plate: el.carPlateInput.value
-            }
-            : null;
+        // Автомашины дэлгэрэнгүй мэдээлэл цуглуулах
+        const carSpecs = category === "Автомашин" ? {
+            brand: el.carBrandInput.value,
+            condition: el.carConditionInput.value,
+            type: el.carTypeInput.value,
+            door: el.carDoorInput.value,
+            steering: el.carSteeringInput.value,
+            drive: el.carDriveInput.value,
+            year: el.carYearInput.value,
+            importedYear: el.carImportedYearInput.value,
+            fuel: el.carFuelInput.value,
+            engineCapacity: el.carEngineCapacityInput.value,
+            gearbox: el.carGearboxInput.value,
+            interiorColor: el.carInteriorColorInput.value,
+            mileage: el.carMileageInput.value,
+            leasing: el.carLeasingInput.value,
+            color: el.carColorInput.value,
+            plate: el.carPlateInput.value
+        } : null;
 
         if (!seller || !title || !price || !location || !category || !description) {
             showToast("Зар оруулагчийн нэр болон бусад мэдээллээ бүрэн оруулна уу.", "error");
             return;
         }
 
-        if (category === "Үл хөдлөх" && !subcategory) {
-            showToast("Үл хөдлөх төрлөө сонгоно уу.", "error");
-            return;
-        }
-
-        let newImages = [];
+        let uploadedImages = [];
         if (state.imageFiles.length) {
-            showToast("Зураг upload хийж байна...", "info");
-            newImages = await uploadImagesToStorage(state.imageFiles);
-
-            if (!newImages.length) {
-                showToast("Зураг upload амжилтгүй боллоо.", "error");
+            showToast("Зураг хуулж байна...", "info");
+            uploadedImages = await uploadImagesToStorage(state.imageFiles);
+            if (!uploadedImages.length) {
+                showToast("Зураг хуулахад алдаа гарлаа.", "error");
                 return;
             }
         }
 
         try {
+            const payload = {
+                seller_name: seller,
+                seller_phone: phone,
+                title,
+                price,
+                location,
+                category,
+                subcategory,
+                status,
+                description,
+                vip,
+                top,
+                car_specs: carSpecs,
+                images: uploadedImages.length ? uploadedImages : null
+            };
+
             if (state.editingAdId) {
-                const idx = state.ads.findIndex((a) => String(a.id) === String(state.editingAdId));
-                if (idx === -1) return;
-
-                const old = state.ads[idx];
-
-                const updatedPayload = {
-                    seller,
-                    phone,
-                    title,
-                    price,
-                    location,
-                    category,
-                    subcategory,
-                    status,
-                    description,
-                    vip,
-                    top,
-                    views: Number(old.views || 0),
-                    images: newImages.length ? newImages : old.images
-                };
-
-                const updatedRow = await updateAdInSupabase(state.editingAdId, updatedPayload);
-
-                state.ads[idx] = {
-                    id: updatedRow.id,
-                    seller: updatedRow.seller_name || seller,
-                    phone: updatedRow.seller_phone || phone,
-                    title: updatedRow.title || title,
-                    price: Number(updatedRow.price || price),
-                    location: updatedRow.location || location,
-                    category: updatedRow.category || category,
-                    subcategory: updatedRow.subcategory || subcategory,
-                    status: updatedRow.status || status,
-                    description: updatedRow.description || description,
-                    vip: Boolean(updatedRow.vip),
-                    top: Boolean(updatedRow.top),
-                    views: Number(updatedRow.views || 0),
-                    createdAt: updatedRow.created_at || old.createdAt,
-                    images: Array.isArray(updatedRow.images) ? updatedRow.images : updatedPayload.images
-                };
-
+                // Зар засах хэсэг
+                const updatedRow = await updateAdInSupabase(state.editingAdId, payload);
+                const idx = state.ads.findIndex(a => String(a.id) === String(state.editingAdId));
+                if (idx !== -1) {
+                    state.ads[idx] = {
+                        ...state.ads[idx],
+                        ...payload,
+                        images: uploadedImages.length ? uploadedImages : state.ads[idx].images
+                    };
+                }
                 showToast("Зар амжилттай засагдлаа.", "success");
             } else {
-                const newAd = {
-                    seller,
-                    phone,
-                    title,
-                    price,
-                    location,
-                    category,
-                    subcategory,
-                    status,
-                    description,
-                    vip,
-                    top,
-                    views: 0,
-                    images: newImages.length ? newImages : ["https://placehold.co/600x400?text=New+Ad"]
-                };
-
-                const insertedRow = await insertAdToSupabase(newAd);
-
-                state.ads.unshift({
-                    id: insertedRow.id,
-                    seller: insertedRow.seller_name || seller,
-                    phone: insertedRow.seller_phone || phone,
-                    title: insertedRow.title || title,
-                    price: Number(insertedRow.price || price),
-                    location: insertedRow.location || location,
-                    category: insertedRow.category || category,
-                    subcategory: insertedRow.subcategory || subcategory,
-                    status: insertedRow.status || status,
-                    description: insertedRow.description || description,
-                    vip: Boolean(insertedRow.vip),
-                    top: Boolean(insertedRow.top),
-                    views: Number(insertedRow.views || 0),
-                    createdAt: insertedRow.created_at || new Date().toISOString(),
-                    images: Array.isArray(insertedRow.images) ? insertedRow.images : newAd.images
-                });
-
+                // Шинэ зар нэмэх хэсэг
+                if (!payload.images) payload.images = ["https://placehold.co/600x400?text=No+Image"];
+                const insertedRow = await insertAdToSupabase(payload);
+                state.ads.unshift(insertedRow);
                 showToast("Шинэ зар нэмэгдлээ.", "success");
             }
 
             saveAll();
             resetForm();
             closeAddAdModal();
-            state.currentPage = 1;
             renderAds();
         } catch (error) {
             console.error("handleSubmitAd error:", error);
-            showToast("Supabase хадгалалт дээр алдаа гарлаа.", "error");
+            showToast("Мэдээлэл хадгалахад алдаа гарлаа.", "error");
         }
     }
 
     function openForgotPasswordModal(event) {
         if (event) event.preventDefault();
         const authModal = document.getElementById("authModal");
-        if (authModal) authModal.classList.remove("show");
+        if (authModal) {
+            authModal.classList.remove("show");
+            authModal.style.display = "none";
+        }
         const resetModal = document.getElementById("forgotPasswordModal");
-        if (resetModal) resetModal.classList.add("show");
+        if (resetModal) {
+            resetModal.classList.add("show");
+            resetModal.style.display = "flex";
+        }
     }
 
     function closeForgotPasswordModal() {
         const resetModal = document.getElementById("forgotPasswordModal");
-        if (resetModal) resetModal.classList.remove("show");
+        if (resetModal) {
+            resetModal.classList.remove("show");
+            resetModal.style.display = "none";
+        }
     }
 
     async function handlePasswordReset() {
@@ -1397,7 +1351,7 @@
         const confirmPass = document.getElementById("resetConfirmPassword").value;
 
         if (!email) return alert("Бүртгэлтэй имэйл хаягаа оруулна уу.");
-        if (newPass.length < 6) return alert("Шинэ нууц үг багадаа 6 тэмдэгт байх ёстой.");
+        if (newPass.length < 6) return alert("Нууц үг багадаа 6 тэмдэгт байх ёстой.");
         if (newPass !== confirmPass) return alert("Нууц үгүүд зөрж байна.");
 
         try {
@@ -1421,14 +1375,15 @@
 
             alert("Нууц үг амжилттай шинэчлэгдлээ.");
             closeForgotPasswordModal();
-            if (document.getElementById("authModal")) {
-                document.getElementById("authModal").classList.add("show");
+            const authModal = document.getElementById("authModal");
+            if (authModal) {
+                authModal.classList.add("show");
+                authModal.style.display = "flex";
             }
         } catch (error) {
             alert("Алдаа гарлаа: " + error.message);
         }
     }
-
     function startEditAd(adId) {
         const ad = state.ads.find((a) => String(a.id) === String(adId));
         if (!ad) return;

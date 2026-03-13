@@ -1894,6 +1894,23 @@
             color: #475569;
             cursor: not-allowed;
         }
+
+        #forgotPasswordModal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #forgotPasswordModal.show {
+            display: flex;
+        }
     </style>
 </head>
 
@@ -2024,8 +2041,8 @@
                     <option value="Үл хөдлөх">Үл хөдлөх</option>
                     <option value="Автомашин">Автомашин</option>
                     <option value="Хувцас хэрэглэл">Хувцас хэрэглэл</option>
-                    <option value="Ажлын зар">Ажлын зар</option>
                     <option value="Хүүхдийн бараа">Хүүхдийн бараа</option>
+                    <option value="Ажлын зар">Ажлын зар</option>
                     <option value="Компьютер сэлбэг хэрэгсэл">Компьютер сэлбэг хэрэгсэл</option>
                     <option value="Утас, дугаар">Утас, дугаар</option>
                     <option value="Цахилгаан бараа">Цахилгаан бараа</option>
