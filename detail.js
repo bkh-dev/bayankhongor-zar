@@ -476,13 +476,53 @@ if (sendMessageBtn) {
   };
 }
 
-function renderAdDetail() {
+async function renderAdDetail() {
   syncDetailAuthStatus();
 
   const adId = getAdIdFromUrl();
-  const updatedAds = increaseViewCount(adId);
-  const ad = updatedAds.find((item) => Number(item.id) === Number(adId));
-  const ads = updatedAds;
+  if (!adId) {
+    detailContainer.innerHTML = `<div class="not-found"><h2>Зар олдсонгүй</h2></div>`;
+    return;
+  }
+
+  // Supabase-аас зар унших
+  const { data: adRow, error } = await supabaseClient
+    .from("ads")
+    .select("*")
+    .eq("id", adId)
+    .single();
+
+  if (error || !adRow) {
+    detailContainer.innerHTML = `<div class="not-found"><h2>Зар олдсонгүй</h2><p>Энэ зар устсан эсвэл байхгүй байна.</p></div>`;
+    return;
+  }
+
+  const ad = {
+    id: adRow.id,
+    title: adRow.title,
+    price: Number(adRow.price || 0),
+    location: adRow.location || "",
+    category: adRow.category || "",
+    subcategory: adRow.subcategory || "",
+    description: adRow.description || "",
+    seller: adRow.seller_name || "",
+    phone: adRow.seller_phone || "",
+    status: adRow.status || "Идэвхтэй",
+    vip: Boolean(adRow.vip),
+    top: Boolean(adRow.top),
+    views: Number(adRow.views || 0),
+    createdAt: adRow.created_at || "",
+    images: Array.isArray(adRow.images) ? adRow.images : []
+  };
+
+  // Views нэмэх
+  await supabaseClient
+    .from("ads")
+    .update({ views: ad.views + 1 })
+    .eq("id", adId);
+
+  // Бүх зарыг localStorage-аас авах (related, seller ads-д ашиглана)
+  const ads = JSON.parse(localStorage.getItem("bh_ads") || "[]");
 
   phoneVisible = false;
 
@@ -628,6 +668,9 @@ function renderAdDetail() {
   const sideShowPhoneBtn = document.getElementById("sideShowPhoneBtn");
   const openContactModalBtn = document.getElementById("openContactModalBtn");
   const sideChatBtn = document.getElementById("sideChatBtn");
+
+  applyTheme(getSavedTheme());
+  renderAdDetail();
 
   function handlePhoneToggle() {
     if (!phoneVisible) {
