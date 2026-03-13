@@ -445,11 +445,11 @@
         syncProfileUI();
     }
 
-    function registerUser() {
+    async function registerUser() {
         const name = el.authNameInput.value.trim();
         const phone = el.authPhoneInput.value.trim();
         const password = el.authPasswordInput.value.trim();
-        const role = el.authRoleSelect.value;
+        const role = el.authRoleSelect.value || "seller";
 
         if (!name || !phone || !password) {
             showToast("Нэр, утасны дугаар, нууц үгээ бүрэн оруулна уу.", "error");
@@ -461,36 +461,51 @@
             return;
         }
 
-        const users = getUsers();
-        const exists = users.some(
-            (user) => String(user.phone || "").trim() === phone
-        );
+        if (password.length < 6) {
+            showToast("Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.", "error");
+            return;
+        }
 
-        if (exists) {
+        // Утас давхардсан эсэх шалгах
+        // Утас давхардсан эсэх шалгах
+        const { data: existing, error: checkError } = await supabaseClient
+            .from("profiles")
+            .select("id")
+            .eq("phone", phone)
+            .maybeSingle(); // single() биш maybeSingle() — олдохгүй үед error гаргахгүй
+
+        if (checkError) {
+            console.error("Check error:", checkError);
+            showToast("Шалгахад алдаа гарлаа: " + checkError.message, "error");
+            return;
+        }
+
+        if (existing) {
             showToast("Ийм утасны дугаартай хэрэглэгч бүртгэлтэй байна.", "error");
             return;
         }
 
-        const newUser = {
-            id: id(),
-            name,
-            phone,
-            password,
-            role,
-            createdAt: new Date().toISOString()
-        };
+        // Шинэ хэрэглэгч үүсгэх
+        const { data: newProfile, error: insertError } = await supabaseClient
+            .from("profiles")
+            .insert({ name, phone, password, role })
+            .select()
+            .single();
 
-        users.push(newUser);
-        saveUsers(users);
+        if (insertError) {
+            console.error("Insert error:", insertError);
+            showToast("Бүртгэл үүсгэхэд алдаа гарлаа: " + insertError.message, "error");
+            return;
+        }
+
+        if (!newProfile) {
+            showToast("Бүртгэл үүсгэхэд алдаа гарлаа.", "error");
+            return;
+        }
 
         state.currentUser = name;
         state.currentRole = role;
-
-        saveSessionUser({
-            name,
-            phone,
-            role
-        });
+        saveSessionUser({ name, phone, role, id: newProfile.id });
 
         saveAll();
         syncCurrentUserUI();
@@ -500,7 +515,7 @@
         showToast("Бүртгэл амжилттай үүслээ.", "success");
     }
 
-    function loginUser() {
+    async function loginUser() {
         const phone = el.authPhoneInput.value.trim();
         const password = el.authPasswordInput.value.trim();
 
@@ -509,36 +524,37 @@
             return;
         }
 
-        const users = getUsers();
-        const foundUser = users.find(
-            (user) =>
-                String(user.phone || "").trim() === phone &&
-                String(user.password) === password
-        );
+        const { data: profile, error } = await supabaseClient
+            .from("profiles")
+            .select("*")
+            .eq("phone", phone)
+            .eq("password", password)
+            .single();
 
-        if (!foundUser) {
+        if (error || !profile) {
             showToast("Утасны дугаар эсвэл нууц үг буруу байна.", "error");
             return;
         }
 
-        state.currentUser = foundUser.name || foundUser.phone;
-        state.currentRole = foundUser.role || "seller";
-
+        state.currentUser = profile.name || profile.phone;
+        state.currentRole = profile.role || "seller";
         saveSessionUser({
-            name: foundUser.name || "",
-            phone: foundUser.phone || "",
-            role: state.currentRole
+            name: profile.name || "",
+            phone: profile.phone || "",
+            role: state.currentRole,
+            id: profile.id
         });
 
         saveAll();
-        closeProfileEdit();
         syncCurrentUserUI();
         closeAuthModal();
         resetForm();
         renderAds();
         showToast("Амжилттай нэвтэрлээ.", "success");
     }
-    function logoutUser() {
+    async function logoutUser() {
+        await supabaseClient.auth.signOut();
+
         state.currentUser = "";
         state.currentRole = "viewer";
         state.viewMode = "all";
