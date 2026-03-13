@@ -751,6 +751,25 @@
         });
     }
 
+    function syncAdOwnerFields() {
+        const sessionUser = getSessionUser();
+        const userPhone = String(sessionUser?.phone || "").trim();
+        const userName = String(state.currentUser || "").trim();
+
+        if (el.sellerInput) {
+            el.sellerInput.value = userName;
+            el.sellerInput.readOnly = Boolean(userName);
+        }
+
+        if (el.phoneInput) {
+            el.phoneInput.value = userPhone;
+            el.phoneInput.readOnly = Boolean(userPhone);
+            el.phoneInput.style.background = userPhone ? "#f8fafc" : "";
+            el.phoneInput.style.cursor = userPhone ? "not-allowed" : "text";
+        }
+    }
+
+
     function renderStats() {
         const all = state.ads;
         el.totalAdsStat.textContent = String(all.length);
@@ -966,7 +985,9 @@
         el.sellerInput.value = state.currentUser || "";
         el.sellerInput.readOnly = Boolean(state.currentUser);
 
-        el.phoneInput.value = "";
+        const sessionUser = getSessionUser();
+        el.phoneInput.value = String(sessionUser?.phone || "").trim();
+        el.phoneInput.readOnly = Boolean(sessionUser?.phone);
         el.titleInput.value = "";
         el.priceInput.value = "";
         el.locationInput.value = "";
@@ -986,6 +1007,8 @@
         el.addAdBtn.textContent = "Зар нэмэх";
 
         syncSubcategoryField();
+        syncAdOwnerFields();
+
     }
     function syncSubcategoryField() {
         const isRealEstate = el.newCategoryInput.value === "Үл хөдлөх";
@@ -1117,7 +1140,8 @@
 
     async function handleSubmitAd() {
         const seller = el.sellerInput.value.trim() || state.currentUser.trim();
-        const phone = el.phoneInput.value.trim();
+        const sessionUser = getSessionUser();
+        const phone = String(sessionUser?.phone || el.phoneInput.value || "").trim();
         const title = el.titleInput.value.trim();
         const price = Number(el.priceInput.value.replaceAll(",", "").trim());
         const location = el.locationInput.value.trim();
@@ -1254,8 +1278,12 @@
         el.cancelEditBtn.style.display = "inline-block";
         el.addAdBtn.textContent = "Хадгалах";
 
-        el.sellerInput.value = ad.seller || "";
-        el.phoneInput.value = ad.phone || "";
+        const sessionUser = getSessionUser();
+
+        el.sellerInput.value = state.currentUser || ad.seller || "";
+        el.phoneInput.value = String(sessionUser?.phone || ad.phone || "").trim();
+        el.sellerInput.readOnly = true;
+        el.phoneInput.readOnly = true;
         el.titleInput.value = ad.title || "";
         el.priceInput.value = ad.price || "";
         el.locationInput.value = ad.location || "";
@@ -1277,10 +1305,7 @@
     }
 
     function openAddAdModal() {
-        if (el.sellerInput) {
-            el.sellerInput.value = state.currentUser || "";
-            el.sellerInput.readOnly = Boolean(state.currentUser);
-        }
+        syncAdOwnerFields();
 
         if (el.addAdModal) {
             el.addAdModal.classList.add("show");
