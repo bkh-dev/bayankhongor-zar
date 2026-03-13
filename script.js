@@ -94,6 +94,23 @@
         newCategoryInput: document.getElementById("newCategoryInput"),
         subcategoryRow: document.getElementById("subcategoryRow"),
         subcategoryInput: document.getElementById("subcategoryInput"),
+        carSpecsSection: document.getElementById("carSpecsSection"),
+        carBrandInput: document.getElementById("carBrandInput"),
+        carConditionInput: document.getElementById("carConditionInput"),
+        carTypeInput: document.getElementById("carTypeInput"),
+        carDoorInput: document.getElementById("carDoorInput"),
+        carSteeringInput: document.getElementById("carSteeringInput"),
+        carDriveInput: document.getElementById("carDriveInput"),
+        carYearInput: document.getElementById("carYearInput"),
+        carImportedYearInput: document.getElementById("carImportedYearInput"),
+        carFuelInput: document.getElementById("carFuelInput"),
+        carEngineCapacityInput: document.getElementById("carEngineCapacityInput"),
+        carGearboxInput: document.getElementById("carGearboxInput"),
+        carInteriorColorInput: document.getElementById("carInteriorColorInput"),
+        carMileageInput: document.getElementById("carMileageInput"),
+        carLeasingInput: document.getElementById("carLeasingInput"),
+        carColorInput: document.getElementById("carColorInput"),
+        carPlateInput: document.getElementById("carPlateInput"),
         statusInput: document.getElementById("statusInput"),
         descriptionInput: document.getElementById("descriptionInput"),
         imageInput: document.getElementById("imageInput"),
@@ -1007,6 +1024,24 @@
         el.addAdBtn.textContent = "Зар нэмэх";
 
         syncSubcategoryField();
+        if (el.carBrandInput) el.carBrandInput.value = "";
+        if (el.carConditionInput) el.carConditionInput.value = "";
+        if (el.carTypeInput) el.carTypeInput.value = "";
+        if (el.carDoorInput) el.carDoorInput.value = "";
+        if (el.carSteeringInput) el.carSteeringInput.value = "";
+        if (el.carDriveInput) el.carDriveInput.value = "";
+        if (el.carYearInput) el.carYearInput.value = "";
+        if (el.carImportedYearInput) el.carImportedYearInput.value = "";
+        if (el.carFuelInput) el.carFuelInput.value = "";
+        if (el.carEngineCapacityInput) el.carEngineCapacityInput.value = "";
+        if (el.carGearboxInput) el.carGearboxInput.value = "";
+        if (el.carInteriorColorInput) el.carInteriorColorInput.value = "";
+        if (el.carMileageInput) el.carMileageInput.value = "";
+        if (el.carLeasingInput) el.carLeasingInput.value = "";
+        if (el.carColorInput) el.carColorInput.value = "";
+        if (el.carPlateInput) el.carPlateInput.value = "";
+
+        syncCarSpecsField();
         syncAdOwnerFields();
 
     }
@@ -1019,6 +1054,14 @@
 
         if (!isRealEstate && el.subcategoryInput) {
             el.subcategoryInput.value = "";
+        }
+    }
+
+    function syncCarSpecsField() {
+        const isCar = el.newCategoryInput.value === "Автомашин";
+
+        if (el.carSpecsSection) {
+            el.carSpecsSection.style.display = isCar ? "block" : "none";
         }
     }
 
@@ -1151,6 +1194,27 @@
         const description = el.descriptionInput.value.trim();
         const vip = el.vipInput.checked;
         const top = el.topInput.checked;
+
+        const carSpecs = category === "Автомашин"
+            ? {
+                brand: el.carBrandInput.value,
+                condition: el.carConditionInput.value,
+                type: el.carTypeInput.value,
+                door: el.carDoorInput.value,
+                steering: el.carSteeringInput.value,
+                drive: el.carDriveInput.value,
+                year: el.carYearInput.value,
+                importedYear: el.carImportedYearInput.value,
+                fuel: el.carFuelInput.value,
+                engineCapacity: el.carEngineCapacityInput.value,
+                gearbox: el.carGearboxInput.value,
+                interiorColor: el.carInteriorColorInput.value,
+                mileage: el.carMileageInput.value,
+                leasing: el.carLeasingInput.value,
+                color: el.carColorInput.value,
+                plate: el.carPlateInput.value
+            }
+            : null;
 
         if (!seller || !title || !price || !location || !category || !description) {
             showToast("Зар оруулагчийн нэр болон бусад мэдээллээ бүрэн оруулна уу.", "error");
@@ -1719,7 +1783,10 @@
         });
 
         if (el.newCategoryInput) {
-            el.newCategoryInput.addEventListener("change", syncSubcategoryField);
+            el.newCategoryInput.addEventListener("change", () => {
+                syncSubcategoryField();
+                syncCarSpecsField();
+            });
         }
 
         el.authModeSelect.addEventListener("change", syncAuthModeUI);

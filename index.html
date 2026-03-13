@@ -1894,6 +1894,19 @@
             color: #475569;
             cursor: not-allowed;
         }
+
+        #carSpecsSection {
+            margin-bottom: 12px;
+            padding: 14px;
+            border: 1px solid #dbe7f5;
+            border-radius: 16px;
+            background: #f8fbff;
+        }
+
+        body.dark-mode #carSpecsSection {
+            background: #162033;
+            border-color: #334155;
+        }
     </style>
 </head>
 
@@ -2241,6 +2254,177 @@
                                                 <option value="Мал амьтан, ургамал">Мал амьтан, ургамал</option>
                                                 <option value="Үйлчилгээ">Үйлчилгээ</option>
                                             </select>
+                                        </div>
+                                    </div>
+
+                                    <div id="carSpecsSection" style="display:none; margin-top:8px;">
+                                        <div class="form-row">
+                                            <label for="carBrandInput" class="form-label">Марк</label>
+                                            <div class="form-field">
+                                                <select id="carBrandInput">
+                                                    <option value="">Сонгох</option>
+                                                    <option value="Toyota">Toyota</option>
+                                                    <option value="Lexus">Lexus</option>
+                                                    <option value="Honda">Honda</option>
+                                                    <option value="Nissan">Nissan</option>
+                                                    <option value="Hyundai">Hyundai</option>
+                                                    <option value="Kia">Kia</option>
+                                                    <option value="Mercedes-Benz">Mercedes-Benz</option>
+                                                    <option value="BMW">BMW</option>
+                                                    <option value="Audi">Audi</option>
+                                                    <option value="Volkswagen">Volkswagen</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carConditionInput" class="form-label">Нөхцөл</label>
+                                            <div class="form-field">
+                                                <select id="carConditionInput">
+                                                    <option value="">Сонгох</option>
+                                                    <option value="Шинэ">Шинэ</option>
+                                                    <option value="Хуучин">Хуучин</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carTypeInput" class="form-label">Төрөл</label>
+                                            <div class="form-field">
+                                                <select id="carTypeInput">
+                                                    <option value="">Сонгох</option>
+                                                    <option value="Седан">Седан</option>
+                                                    <option value="Жийп">Жийп</option>
+                                                    <option value="Кроссовер">Кроссовер</option>
+                                                    <option value="Хэтчбэк">Хэтчбэк</option>
+                                                    <option value="Купе">Купе</option>
+                                                    <option value="Пикап">Пикап</option>
+                                                    <option value="Микро">Микро</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carDoorInput" class="form-label">Хаалга</label>
+                                            <div class="form-field">
+                                                <select id="carDoorInput">
+                                                    <option value="">Сонгох</option>
+                                                    <option value="2">2</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carSteeringInput" class="form-label">Хүрд</label>
+                                            <div class="form-field">
+                                                <select id="carSteeringInput">
+                                                    <option value="">Сонгох</option>
+                                                    <option value="Зүүн">Зүүн</option>
+                                                    <option value="Баруун">Баруун</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carDriveInput" class="form-label">Хөтлөгч</label>
+                                            <div class="form-field">
+                                                <select id="carDriveInput">
+                                                    <option value="">Сонгох</option>
+                                                    <option value="Урд">Урд</option>
+                                                    <option value="Хойд">Хойд</option>
+                                                    <option value="4WD">4WD</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carYearInput" class="form-label">Үйлдвэрлэсэн он</label>
+                                            <div class="form-field">
+                                                <input type="number" id="carYearInput" placeholder="Жишээ: 2016">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carImportedYearInput" class="form-label">Орж ирсэн он</label>
+                                            <div class="form-field">
+                                                <input type="number" id="carImportedYearInput"
+                                                    placeholder="Жишээ: 2024">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carFuelInput" class="form-label">Хөдөлгүүр</label>
+                                            <div class="form-field">
+                                                <select id="carFuelInput">
+                                                    <option value="">Сонгох</option>
+                                                    <option value="Бензин">Бензин</option>
+                                                    <option value="Дизель">Дизель</option>
+                                                    <option value="Хайбрид">Хайбрид</option>
+                                                    <option value="Цахилгаан">Цахилгаан</option>
+                                                    <option value="Хосолмол">Хосолмол</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carEngineCapacityInput" class="form-label">Мотор
+                                                багтаамж</label>
+                                            <div class="form-field">
+                                                <input type="text" id="carEngineCapacityInput" placeholder="Жишээ: 2.5">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carGearboxInput" class="form-label">Хурдны хайрцаг</label>
+                                            <div class="form-field">
+                                                <select id="carGearboxInput">
+                                                    <option value="">Сонгох</option>
+                                                    <option value="Автомат">Автомат</option>
+                                                    <option value="Механик">Механик</option>
+                                                    <option value="CVT">CVT</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carInteriorColorInput" class="form-label">Дотор өнгө</label>
+                                            <div class="form-field">
+                                                <input type="text" id="carInteriorColorInput" placeholder="Жишээ: Хар">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carMileageInput" class="form-label">Явсан</label>
+                                            <div class="form-field">
+                                                <input type="number" id="carMileageInput" placeholder="Жишээ: 71000">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carLeasingInput" class="form-label">Лизинг</label>
+                                            <div class="form-field">
+                                                <select id="carLeasingInput">
+                                                    <option value="">Сонгох</option>
+                                                    <option value="Боломжтой">Боломжтой</option>
+                                                    <option value="Боломжгүй">Боломжгүй</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carColorInput" class="form-label">Өнгө</label>
+                                            <div class="form-field">
+                                                <input type="text" id="carColorInput" placeholder="Жишээ: Цагаан">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <label for="carPlateInput" class="form-label">Арлын дугаар</label>
+                                            <div class="form-field">
+                                                <input type="text" id="carPlateInput" placeholder="Жишээ: 1234 УБА">
+                                            </div>
                                         </div>
                                     </div>
 
