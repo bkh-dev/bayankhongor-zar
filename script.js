@@ -166,7 +166,15 @@
         authPhoneInput: document.getElementById("authPhoneInput"),
         authPasswordInput: document.getElementById("authPasswordInput"),
         authRoleSelect: document.getElementById("authRoleSelect"),
-        authSubmitBtn: document.getElementById("authSubmitBtn")
+        authSubmitBtn: document.getElementById("authSubmitBtn"),
+
+        forgotPasswordBtn: document.getElementById("forgotPasswordBtn"),
+        resetPasswordModal: document.getElementById("resetPasswordModal"),
+        closeResetPasswordModalBtn: document.getElementById("closeResetPasswordModalBtn"),
+        resetPhoneInput: document.getElementById("resetPhoneInput"),
+        resetNewPasswordInput: document.getElementById("resetNewPasswordInput"),
+        resetPasswordSubmitBtn: document.getElementById("resetPasswordSubmitBtn"),
+
     };
 
     // -------------------------
@@ -332,6 +340,50 @@
         el.authRoleSelect.value = "seller";
     }
 
+    function openResetPasswordModal() {
+        if (el.resetPasswordModal) {
+            el.resetPasswordModal.classList.add("show");
+        }
+    }
+
+    function closeResetPasswordModal() {
+        if (el.resetPasswordModal) {
+            el.resetPasswordModal.classList.remove("show");
+        }
+
+        if (el.resetPhoneInput) el.resetPhoneInput.value = "";
+        if (el.resetNewPasswordInput) el.resetNewPasswordInput.value = "";
+    }
+
+    function resetPassword() {
+        const phone = el.resetPhoneInput.value.trim();
+        const newPassword = el.resetNewPasswordInput.value.trim();
+
+        if (!phone || !newPassword) {
+            showToast("Утасны дугаар болон шинэ нууц үгээ оруулна уу.", "error");
+            return;
+        }
+
+        const users = getUsers();
+        const userIndex = users.findIndex(
+            (user) => String(user.phone || "").trim() === phone
+        );
+
+        if (userIndex === -1) {
+            showToast("Ийм утасны дугаартай бүртгэл олдсонгүй.", "error");
+            return;
+        }
+
+        users[userIndex] = {
+            ...users[userIndex],
+            password: newPassword
+        };
+
+        saveUsers(users);
+        closeResetPasswordModal();
+        showToast("Нууц үг амжилттай шинэчлэгдлээ.", "success");
+    }
+
     function syncAuthModeUI() {
         const isRegister = el.authModeSelect.value === "register";
         state.authMode = isRegister ? "register" : "login";
@@ -470,11 +522,12 @@
         }
 
         const users = getUsers();
-        const exists = users.some(
+        const existsInLocal = users.some(
             (user) => String(user.phone || "").trim() === phone
         );
+        const existsInSupabase = await phoneExistsInSupabase(phone);
 
-        if (exists) {
+        if (existsInLocal || existsInSupabase) {
             showToast("Ийм утасны дугаартай хэрэглэгч бүртгэлтэй байна.", "error");
             return;
         }
@@ -523,31 +576,35 @@
             return;
         }
 
-        const { data: profile, error } = await supabaseClient
-            .from("profiles")
-            .select("*")
-            .eq("phone", phone)
-            .eq("password", password)
-            .single();
+        const users = getUsers();
+        const foundUser = users.find(
+            (user) =>
+                String(user.phone || "").trim() === phone &&
+                String(user.password || "") === password
+        );
 
-        if (error || !profile) {
+        if (!foundUser) {
             showToast("Утасны дугаар эсвэл нууц үг буруу байна.", "error");
             return;
         }
 
-        const profileRow = await upsertProfileToSupabase({
-            name: foundUser.name || foundUser.phone,
-            phone: foundUser.phone || "",
-            role: foundUser.role || "seller"
-        });
+        let profileRow = null;
+        try {
+            profileRow = await loadProfileFromSupabase(phone);
+        } catch (error) {
+            console.error("loginUser profile load error:", error);
+        }
 
-        state.currentUser = profileRow.name || foundUser.name || foundUser.phone;
-        state.currentRole = profileRow.role || foundUser.role || "seller";
+        const finalName = profileRow?.name || foundUser.name || foundUser.phone;
+        const finalRole = profileRow?.role || foundUser.role || "seller";
+
+        state.currentUser = finalName;
+        state.currentRole = finalRole;
 
         saveSessionUser({
-            name: state.currentUser,
+            name: finalName,
             phone: foundUser.phone || "",
-            role: state.currentRole
+            role: finalRole
         });
 
         saveAll();
@@ -557,6 +614,7 @@
         renderAds();
         showToast("Амжилттай нэвтэрлээ.", "success");
     }
+
     async function logoutUser() {
         await supabaseClient.auth.signOut();
 
@@ -1693,14 +1751,39 @@
     }
 
     async function upsertProfileToSupabase(profile) {
+        const existingProfile = await loadProfileFromSupabase(profile.phone);
+
+        if (existingProfile) {
+            const { data, error } = await supabaseClient
+                .from("profiles")
+                .update({
+                    name: profile.name,
+                    role: profile.role
+                })
+                .eq("phone", profile.phone)
+                .select()
+                .single();
+
+            if (error) {
+                console.error("Supabase profile update error:", error);
+                throw error;
+            }
+
+            return data;
+        }
+
         const { data, error } = await supabaseClient
             .from("profiles")
-            .upsert([profile], { onConflict: "phone" })
+            .insert([{
+                name: profile.name,
+                phone: profile.phone,
+                role: profile.role
+            }])
             .select()
             .single();
 
         if (error) {
-            console.error("Supabase profile upsert error:", error);
+            console.error("Supabase profile insert error:", error);
             throw error;
         }
 
@@ -1720,6 +1803,21 @@
         }
 
         return data || null;
+    }
+
+    async function phoneExistsInSupabase(phone) {
+        const { data, error } = await supabaseClient
+            .from("profiles")
+            .select("phone")
+            .eq("phone", phone)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Supabase phone check error:", error);
+            return false;
+        }
+
+        return Boolean(data);
     }
 
     async function updateProfileInSupabase(userPhone, updates) {
@@ -1940,6 +2038,21 @@
 
         el.closeAuthModalBtn.addEventListener("click", closeAuthModal);
 
+        if (el.forgotPasswordBtn) {
+            el.forgotPasswordBtn.addEventListener("click", () => {
+                closeAuthModal();
+                openResetPasswordModal();
+            });
+        }
+
+        if (el.closeResetPasswordModalBtn) {
+            el.closeResetPasswordModalBtn.addEventListener("click", closeResetPasswordModal);
+        }
+
+        if (el.resetPasswordSubmitBtn) {
+            el.resetPasswordSubmitBtn.addEventListener("click", resetPassword);
+        }
+
         el.clearUserBtn.addEventListener("click", () => {
             state.currentUser = "";
             el.currentUserInput.value = "";
@@ -2124,6 +2237,7 @@
                 closeAddAdModal();
             }
             if (e.target === el.mobileCategoriesModal) closeMobileCategoriesModal();
+            if (e.target === el.resetPasswordModal) closeResetPasswordModal();
         });
 
         if (el.priceInput) {

@@ -2557,29 +2557,48 @@
                 </select>
 
                 <button id="authSubmitBtn" class="submit-btn" style="width:100%;">Нэвтрэх</button>
+                <button id="forgotPasswordBtn" type="button" class="my-ads-btn secondary"
+                    style="width:100%; margin-top:10px;">
+                    Нууц үг мартсан
+                </button </div>
             </div>
-        </div>
-        <footer>
-            © 2026 Баянхонгор Аймгийн Зар
+            <footer>
+                © 2026 Баянхонгор Аймгийн Зар
 
 
-            <div id="toastContainer" class="toast-container"></div>
+                <div id="toastContainer" class="toast-container"></div>
 
-            <div id="deleteModal" class="contact-modal">
-                <div class="contact-modal-content" style="max-width:420px;">
-                    <button id="closeDeleteModal" class="contact-close-btn">✕</button>
-                    <h2>Зар устгах уу?</h2>
-                    <p id="deleteModalText">Та энэ зарыг устгах гэж байна.</p>
+                <div id="deleteModal" class="contact-modal">
+                    <div class="contact-modal-content" style="max-width:420px;">
+                        <button id="closeDeleteModal" class="contact-close-btn">✕</button>
+                        <h2>Зар устгах уу?</h2>
+                        <p id="deleteModalText">Та энэ зарыг устгах гэж байна.</p>
 
-                    <div style="display:flex; gap:10px; margin-top:18px;">
-                        <button id="confirmDeleteBtn" class="delete-btn" style="flex:1;">Тийм, устга</button>
-                        <button id="cancelDeleteBtn" class="my-ads-btn secondary" style="flex:1;">Болих</button>
+                        <div style="display:flex; gap:10px; margin-top:18px;">
+                            <button id="confirmDeleteBtn" class="delete-btn" style="flex:1;">Тийм, устга</button>
+                            <button id="cancelDeleteBtn" class="my-ads-btn secondary" style="flex:1;">Болих</button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-            <script src="script.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+                <script src="script.js"></script>
+
+                <div id="resetPasswordModal" class="contact-modal">
+                    <div class="contact-modal-content" style="max-width:420px;">
+                        <button id="closeResetPasswordModalBtn" class="contact-close-btn">✕</button>
+                        <h2>Нууц үг сэргээх</h2>
+
+                        <input type="text" id="resetPhoneInput" placeholder="Бүртгэлтэй утасны дугаар"
+                            style="width:100%; padding:12px; border:1px solid #d1d5db; border-radius:10px; margin-bottom:12px;">
+
+                        <input type="password" id="resetNewPasswordInput" placeholder="Шинэ нууц үг"
+                            style="width:100%; padding:12px; border:1px solid #d1d5db; border-radius:10px; margin-bottom:12px;">
+
+                        <button id="resetPasswordSubmitBtn" class="submit-btn" style="width:100%;">Шинэ нууц үг
+                            хадгалах</button>
+                    </div>
+                </div>
 </body>
 
 </html>
