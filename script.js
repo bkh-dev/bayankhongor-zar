@@ -969,6 +969,39 @@
         });
     }
 
+    async function uploadImagesToStorage(files) {
+        const uploadedUrls = [];
+
+        for (const file of files) {
+            const fileExt = file.name.split(".").pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+            const filePath = `ads/${fileName}`;
+
+            const { error } = await supabaseClient.storage
+                .from("ad-images")
+                .upload(filePath, file, {
+                    cacheControl: "3600",
+                    upsert: false
+                });
+
+            if (error) {
+                console.error("Upload error:", error);
+                showToast("Зураг upload хийхэд алдаа гарлаа: " + error.message, "error");
+                continue;
+            }
+
+            const { data } = supabaseClient.storage
+                .from("ad-images")
+                .getPublicUrl(filePath);
+
+            if (data?.publicUrl) {
+                uploadedUrls.push(data.publicUrl);
+            }
+        }
+
+        return uploadedUrls;
+    }
+
     async function insertAdToSupabase(ad) {
         const payload = {
             title: ad.title,
@@ -1068,7 +1101,13 @@
 
         let newImages = [];
         if (state.imageFiles.length) {
-            newImages = await Promise.all(state.imageFiles.map(toDataUrl));
+            showToast("Зураг upload хийж байна...", "info");
+            newImages = await uploadImagesToStorage(state.imageFiles);
+
+            if (!newImages.length) {
+                showToast("Зураг upload амжилтгүй боллоо.", "error");
+                return;
+            }
         }
 
         try {
