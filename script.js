@@ -1421,18 +1421,35 @@
     // -------------------------
     // Favorite / compare
     // -------------------------
-    function toggleFavorite(adId) {
+    async function toggleFavorite(adId) {
         if (!requireAuth("Зар хадгалахын тулд нэвтэрнэ үү.")) return;
-        const idNum = Number(adId);
-        if (state.favorites.has(idNum)) {
-            state.favorites.delete(idNum);
-            showToast("Таалагдсан жагсаалтаас хаслаа.", "info");
-        } else {
-            state.favorites.add(idNum);
-            showToast("Таалагдсан жагсаалтад нэмлээ.", "success");
+
+        const sessionUser = getSessionUser();
+        const userPhone = String(sessionUser?.phone || "").trim();
+
+        if (!userPhone) {
+            showToast("Хэрэглэгчийн утасны мэдээлэл олдсонгүй.", "error");
+            return;
         }
-        saveAll();
-        renderAds();
+
+        const idNum = String(adId);
+
+        try {
+            if ([...state.favorites].map(String).includes(idNum)) {
+                await removeFavoriteFromSupabase(userPhone, adId);
+                state.favorites = new Set([...state.favorites].filter((id) => String(id) !== idNum));
+                showToast("Таалагдсан жагсаалтаас хаслаа.", "info");
+            } else {
+                await addFavoriteToSupabase(userPhone, adId);
+                state.favorites.add(adId);
+                showToast("Таалагдсан жагсаалтад нэмлээ.", "success");
+            }
+
+            renderAds();
+        } catch (error) {
+            console.error("toggleFavorite error:", error);
+            showToast("Supabase favorite хадгалах үед алдаа гарлаа.", "error");
+        }
     }
 
     function toggleCompare(adId) {
@@ -1642,6 +1659,47 @@
         return data || [];
     }
 
+    async function loadFavoritesFromSupabase(userPhone) {
+        const { data, error } = await supabaseClient
+            .from("favorites")
+            .select("*")
+            .eq("user_phone", userPhone);
+
+        if (error) {
+            console.error("Supabase favorites load error:", error);
+            return [];
+        }
+
+        return data || [];
+    }
+
+    async function addFavoriteToSupabase(userPhone, adId) {
+        const { error } = await supabaseClient
+            .from("favorites")
+            .insert([{
+                user_phone: userPhone,
+                ad_id: adId
+            }]);
+
+        if (error) {
+            console.error("Supabase add favorite error:", error);
+            throw error;
+        }
+    }
+
+    async function removeFavoriteFromSupabase(userPhone, adId) {
+        const { error } = await supabaseClient
+            .from("favorites")
+            .delete()
+            .eq("user_phone", userPhone)
+            .eq("ad_id", adId);
+
+        if (error) {
+            console.error("Supabase remove favorite error:", error);
+            throw error;
+        }
+    }
+
     async function loadAll() {
         const legacyAds = localStorage.getItem("bayankhongor_ads");
         if (!localStorage.getItem(ADS_KEY) && legacyAds) {
@@ -1698,6 +1756,7 @@
         const theme = localStorage.getItem(THEME_KEY) || "light";
         applyTheme(theme);
     }
+
 
     async function replyToMessage(receiverName, adId, adTitle) {
         const replyText = prompt(`${receiverName}-д хариу бичих:`);
@@ -2144,6 +2203,13 @@
 
     async function init() {
         await loadAll();
+        const sessionUser = getSessionUser();
+        const userPhone = String(sessionUser?.phone || "").trim();
+
+        if (userPhone) {
+            const favoriteRows = await loadFavoritesFromSupabase(userPhone);
+            state.favorites = new Set(favoriteRows.map((row) => row.ad_id));
+        }
         syncCurrentUserUI();
 
         if (el.roleSelect) {
