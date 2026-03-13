@@ -480,26 +480,33 @@ async function renderAdDetail() {
   syncDetailAuthStatus();
 
   const adId = getAdIdFromUrl();
+
   if (!adId) {
-    detailContainer.innerHTML = `<div class="not-found"><h2>Зар олдсонгүй</h2></div>`;
+    if (favoriteBtn) favoriteBtn.style.display = "none";
+    if (shareBtn) shareBtn.style.display = "none";
+    detailContainer.innerHTML = `<div class="not-found"><h2>Зар олдсонгүй</h2><p>Энэ зар устсан эсвэл байхгүй байна.</p></div>`;
     return;
   }
 
-  // Supabase-аас зар унших
+  detailContainer.innerHTML = `<div class="not-found"><p>Ачаалж байна...</p></div>`;
+
   const { data: adRow, error } = await supabaseClient
     .from("ads")
     .select("*")
-    .eq("id", adId)
+    .eq("id", String(adId))
     .single();
 
   if (error || !adRow) {
+    console.error("Ad fetch error:", error);
+    if (favoriteBtn) favoriteBtn.style.display = "none";
+    if (shareBtn) shareBtn.style.display = "none";
     detailContainer.innerHTML = `<div class="not-found"><h2>Зар олдсонгүй</h2><p>Энэ зар устсан эсвэл байхгүй байна.</p></div>`;
     return;
   }
 
   const ad = {
     id: adRow.id,
-    title: adRow.title,
+    title: adRow.title || "Гарчиггүй зар",
     price: Number(adRow.price || 0),
     location: adRow.location || "",
     category: adRow.category || "",
@@ -519,10 +526,31 @@ async function renderAdDetail() {
   await supabaseClient
     .from("ads")
     .update({ views: ad.views + 1 })
-    .eq("id", adId);
+    .eq("id", ad.id);
 
-  // Бүх зарыг localStorage-аас авах (related, seller ads-д ашиглана)
-  const ads = JSON.parse(localStorage.getItem("bh_ads") || "[]");
+  // Related болон seller ads-д ашиглах
+  const { data: allAdsRaw } = await supabaseClient
+    .from("ads")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const ads = (allAdsRaw || []).map((a) => ({
+    id: a.id,
+    title: a.title || "",
+    price: Number(a.price || 0),
+    location: a.location || "",
+    category: a.category || "",
+    subcategory: a.subcategory || "",
+    description: a.description || "",
+    seller: a.seller_name || "",
+    phone: a.seller_phone || "",
+    status: a.status || "Идэвхтэй",
+    vip: Boolean(a.vip),
+    top: Boolean(a.top),
+    views: Number(a.views || 0),
+    createdAt: a.created_at || "",
+    images: Array.isArray(a.images) ? a.images : []
+  }));
 
   phoneVisible = false;
 
@@ -531,22 +559,6 @@ async function renderAdDetail() {
     themeToggleBtn.onclick = function () {
       toggleTheme();
     };
-  }
-
-  if (!ad) {
-    if (favoriteBtn) favoriteBtn.style.display = "none";
-    if (shareBtn) shareBtn.style.display = "none";
-    if (relatedAdsContainer) relatedAdsContainer.innerHTML = "";
-    if (sellerAdsContainer) sellerAdsContainer.innerHTML = "";
-    if (prevNextContainer) prevNextContainer.innerHTML = "";
-
-    detailContainer.innerHTML = `
-      <div class="not-found">
-        <h2>Зар олдсонгүй</h2>
-        <p>Энэ зар устсан эсвэл байхгүй байна.</p>
-      </div>
-    `;
-    return;
   }
 
   if (favoriteBtn) {
@@ -564,8 +576,9 @@ async function renderAdDetail() {
     };
   }
 
-  const images = Array.isArray(ad.images) ? ad.images : (ad.image ? [ad.image] : []);
+  const images = ad.images;
   const mainImage = images[0] || "";
+
   const specItems = [
     ["Ангилал", ad.category || "Бусад"],
     ["Төрөл", ad.subcategory || "-"],
@@ -579,98 +592,92 @@ async function renderAdDetail() {
   ];
 
   detailContainer.innerHTML = `
-    <div class="detail-topbar">
-      <div class="detail-title-box">
-        <div class="title">${ad.title || "Гарчиггүй зар"}</div>
-        <div class="detail-submeta">
-          ${ad.location || "Байршилгүй"}<br>
-          Нийтэлсэн: ${formatDate(ad.createdAt)} · Зарын дугаар: ${ad.id}
-        </div>
-      </div>
-    </div>
-
-    <div class="detail-shell">
-      <div class="detail-main">
-        <div class="detail-card">
-          ${mainImage ? `
-            <div class="detail-image-wrap">
-              <img class="detail-image" id="mainDetailImage" src="${mainImage}" alt="${ad.title}">
+        <div class="detail-topbar">
+            <div class="detail-title-box">
+                <div class="title">${ad.title}</div>
+                <div class="detail-submeta">
+                    ${ad.location || "Байршилгүй"}<br>
+                    Нийтэлсэн: ${formatDate(ad.createdAt)} · Зарын дугаар: ${ad.id}
+                </div>
             </div>
-          ` : `
-            <div class="detail-image-wrap">
-              <div class="detail-no-image">Зураг байхгүй</div>
+        </div>
+
+        <div class="detail-shell">
+            <div class="detail-main">
+                <div class="detail-card">
+                    ${mainImage ? `
+                        <div class="detail-image-wrap">
+                            <img class="detail-image" id="mainDetailImage" src="${mainImage}" alt="${ad.title}">
+                        </div>
+                    ` : `
+                        <div class="detail-image-wrap">
+                            <div class="detail-no-image">Зураг байхгүй</div>
+                        </div>
+                    `}
+                    ${images.length > 1 ? `
+                        <div class="detail-thumbnails">
+                            ${images.map((img, index) => `
+                                <img
+                                    src="${img}"
+                                    alt="thumb-${index}"
+                                    class="detail-thumb ${index === 0 ? "active" : ""}"
+                                    onclick="changeDetailImage('${img.replaceAll("'", "\\'")}')"
+                                >
+                            `).join("")}
+                        </div>
+                    ` : ""}
+                </div>
+
+                <div class="detail-actions-inline">
+                    <button id="showPhoneBtn" class="favorite-btn" style="background:#ff2b1c;">Дугаар харах</button>
+                    <button id="openContactModalBtn" class="favorite-btn" style="background:#ff2b1c;">Чатлах</button>
+                </div>
+
+                <div class="detail-specs">
+                    <div class="detail-specs-grid">
+                        ${specItems.map(([label, value]) => `
+                            <div class="detail-spec-item">
+                                <div class="detail-spec-label">${label}</div>
+                                <div class="detail-spec-value">${value}</div>
+                            </div>
+                        `).join("")}
+                    </div>
+                </div>
+
+                <div class="detail-description-box">
+                    <div class="detail-description-title">Дэлгэрэнгүй мэдээлэл</div>
+                    <div class="description">${ad.description || "Тайлбар байхгүй"}</div>
+                </div>
             </div>
-          `}
 
-          ${images.length ? `
-            <div class="detail-thumbnails">
-              ${images.map((img, index) => `
-                <img
-                  src="${img}"
-                  alt="thumb-${index}"
-                  class="detail-thumb ${index === 0 ? "active" : ""}"
-                  onclick="changeDetailImage('${img.replaceAll("'", "\\'")}')"
-                >
-              `).join("")}
-            </div>
-          ` : ""}
+            <aside class="detail-side">
+                <div class="detail-side-card">
+                    <div class="detail-side-price">
+                        ${formatPrice(ad.price)}
+                        <span class="detail-side-location">${ad.location || ""}</span>
+                    </div>
+                    <button id="sideShowPhoneBtn" class="detail-cta-btn phone">Дугаар харах</button>
+                    <button id="sideChatBtn" class="detail-cta-btn chat">Чатлах</button>
+                    <div class="detail-warning">
+                        Луйвраас үргэлж сэрэмжтэй байгаарай. Баталгаагүй урьдчилгаа бүү шилжүүлээрэй.
+                    </div>
+                </div>
+
+                <div class="detail-side-card">
+                    <div class="detail-seller-name">${ad.seller || "Хэрэглэгч"}</div>
+                    <div class="detail-seller-meta">
+                        Энэ хэрэглэгчийн идэвхтэй заруудыг доороос харж болно.
+                    </div>
+                </div>
+            </aside>
         </div>
-
-        <div class="detail-actions-inline">
-          <button id="showPhoneBtn" class="favorite-btn" style="background:#ff2b1c;">Дугаар харах</button>
-          <button id="openContactModalBtn" class="favorite-btn" style="background:#ff2b1c;">Чатлах</button>
-        </div>
-
-        <div class="detail-specs">
-          <div class="detail-specs-grid">
-            ${specItems.map(([label, value]) => `
-              <div class="detail-spec-item">
-                <div class="detail-spec-label">${label}</div>
-                <div class="detail-spec-value">${value}</div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-
-        <div class="detail-description-box">
-          <div class="detail-description-title">Дэлгэрэнгүй мэдээлэл</div>
-          <div class="description">${ad.description || "Тайлбар байхгүй"}</div>
-        </div>
-      </div>
-
-      <aside class="detail-side">
-        <div class="detail-side-card">
-          <div class="detail-side-price">
-            ${formatPrice(ad.price)}
-            <span class="detail-side-location">${ad.location || "УБ хот"}</span>
-          </div>
-
-          <button id="sideShowPhoneBtn" class="detail-cta-btn phone">Дугаар харах</button>
-          <button id="sideChatBtn" class="detail-cta-btn chat">Чатлах</button>
-
-          <div class="detail-warning">
-            Луйвраас үргэлж сэрэмжтэй байгаарай. Баталгаагүй урьдчилгаа бүү шилжүүлээрэй.
-          </div>
-        </div>
-
-        <div class="detail-side-card">
-          <div class="detail-seller-name">${ad.seller || "NNN"}</div>
-          <div class="detail-seller-meta">
-            Энэ хэрэглэгчийн идэвхтэй заруудыг доороос харж болно.
-          </div>
-        </div>
-      </aside>
-    </div>
-  `;
+    `;
 
   const phoneTextValue = ad.phone || "Утас байхгүй";
   const showPhoneBtn = document.getElementById("showPhoneBtn");
   const sideShowPhoneBtn = document.getElementById("sideShowPhoneBtn");
   const openContactModalBtn = document.getElementById("openContactModalBtn");
   const sideChatBtn = document.getElementById("sideChatBtn");
-
-  applyTheme(getSavedTheme());
-  renderAdDetail();
 
   function handlePhoneToggle() {
     if (!phoneVisible) {
@@ -685,46 +692,25 @@ async function renderAdDetail() {
     }
   }
 
-  if (showPhoneBtn) {
-    showPhoneBtn.onclick = handlePhoneToggle;
-  }
-
-  if (sideShowPhoneBtn) {
-    sideShowPhoneBtn.onclick = handlePhoneToggle;
-  }
+  if (showPhoneBtn) showPhoneBtn.onclick = handlePhoneToggle;
+  if (sideShowPhoneBtn) sideShowPhoneBtn.onclick = handlePhoneToggle;
 
   function openChatModal() {
     if (!requireAuth("Худалдагчтай холбогдохын тулд нэвтэрнэ үү.")) return;
-
-    if (contactModal) {
-      contactModal.classList.add("show");
-    }
-
-    if (modalSellerName) {
-      modalSellerName.textContent = ad.seller || "Хэрэглэгч";
-    }
-
-    if (modalSellerPhone) {
-      modalSellerPhone.textContent = ad.phone || "Утас байхгүй";
-    }
-
+    if (contactModal) contactModal.classList.add("show");
+    if (modalSellerName) modalSellerName.textContent = ad.seller || "Хэрэглэгч";
+    if (modalSellerPhone) modalSellerPhone.textContent = ad.phone || "Утас байхгүй";
     if (buyerNameInput) {
       buyerNameInput.value = getCurrentUsername();
       buyerNameInput.readOnly = true;
     }
-
     if (buyerMessageInput) {
       buyerMessageInput.value = `Сайн байна уу, "${ad.title}" зарыг сонирхож байна.`;
     }
   }
 
-  if (openContactModalBtn) {
-    openContactModalBtn.onclick = openChatModal;
-  }
-
-  if (sideChatBtn) {
-    sideChatBtn.onclick = openChatModal;
-  }
+  if (openContactModalBtn) openContactModalBtn.onclick = openChatModal;
+  if (sideChatBtn) sideChatBtn.onclick = openChatModal;
 
   renderPrevNextAds(ad, ads);
   renderRelatedAds(ad, ads);
