@@ -1371,41 +1371,50 @@
     // -------------------------
     // Inbox / compare modal
     // -------------------------
-    function openInbox() {
-        const raw = localStorage.getItem(INBOX_KEY);
-        let messages = [];
-
+    async function openInbox() {
         try {
-            messages = raw ? JSON.parse(raw) : [];
-            if (!Array.isArray(messages)) messages = [];
-        } catch {
-            messages = [];
-        }
+            const messages = await loadMessagesFromSupabase();
 
-        const currentSeller = String(state.currentUser || "").trim().toLowerCase();
-        const filteredMessages = messages.filter(
-            (m) => String(m.sellerName || "").trim().toLowerCase() === currentSeller
-        );
+            // Одоо нэвтэрсэн байгаа хэрэглэгчийн нэр
+            const currentName = String(state.currentUser?.name || "").trim().toLowerCase();
 
-        el.inboxList.innerHTML = filteredMessages.length
-            ? filteredMessages
-                .slice(0, 20)
-                .map(
-                    (m) => `
-                <div class="inbox-item">
-                    <div class="inbox-item-title">${escapeHtml(m.adTitle || "Гарчиггүй зар")}</div>
-                    <div class="inbox-item-meta">
-                        ${escapeHtml(m.buyerName || "Хэрэглэгч")} → ${escapeHtml(m.sellerName || "Зар оруулагч")}
-                        • ${escapeHtml(m.createdAt || "")}
+            // Зөвхөн надад ирсэн мессежүүдийг шүүх
+            const filteredMessages = messages.filter((m) => {
+                const receiverName = String(m.receiver_name || "").trim().toLowerCase();
+                return receiverName === currentName;
+            });
+
+            el.inboxList.innerHTML = filteredMessages.length
+                ? filteredMessages
+                    .slice(0, 20)
+                    .map(
+                        (m) => `
+                <div class="inbox-item" style="border-bottom: 1px solid #eee; padding: 15px; margin-bottom: 10px;">
+                    <div class="inbox-item-title" style="font-weight: bold; color: #ff2b1c;">
+                        Зарын гарчиг: ${escapeHtml(m.ad_title || "Гарчиггүй зар")}
                     </div>
-                    <div class="inbox-item-message">${escapeHtml(m.message || "")}</div>
+                    <div class="inbox-item-meta" style="font-size: 0.85em; color: #666; margin: 5px 0;">
+                        Хэнээс: <strong>${escapeHtml(m.sender_name || "Хэрэглэгч")}</strong> 
+                        • ${new Date(m.created_at).toLocaleString()}
+                    </div>
+                    <div class="inbox-item-message" style="background: #f1f1f1; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                        ${escapeHtml(m.message_text || "")}
+                    </div>
+                    <button onclick="window.replyToMessage('${(m.sender_name || "").replace(/'/g, "\\'")}', '${m.ad_id}', '${(m.ad_title || "Зар").replace(/'/g, "\\'")}')" 
+                            style="background: #007bff; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
+                        Хариу бичих
+                    </button>
                 </div>
             `
-                )
-                .join("")
-            : `<div class="empty-box">Таны inbox хоосон байна.</div>`;
+                    )
+                    .join("")
+                : `<div class="empty-box" style="text-align:center; padding: 20px;">Танд ирсэн мессеж алга.</div>`;
 
-        el.inboxModal.classList.add("show");
+            el.inboxModal.classList.add("show");
+        } catch (error) {
+            console.error("openInbox error:", error);
+            alert("Инбокс уншихад алдаа гарлаа.");
+        }
     }
 
     function openCompare() {
@@ -1522,6 +1531,20 @@
         }));
     }
 
+    async function loadMessagesFromSupabase() {
+        const { data, error } = await supabaseClient
+            .from("messages")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) {
+            console.error("Supabase messages load error:", error);
+            return [];
+        }
+
+        return data || [];
+    }
+
     async function loadAll() {
         const legacyAds = localStorage.getItem("bayankhongor_ads");
         if (!localStorage.getItem(ADS_KEY) && legacyAds) {
@@ -1578,6 +1601,36 @@
         const theme = localStorage.getItem(THEME_KEY) || "light";
         applyTheme(theme);
     }
+
+    async function replyToMessage(receiverName, adId, adTitle) {
+        const replyText = prompt(`${receiverName}-д хариу бичих:`);
+
+        if (!replyText || !replyText.trim()) return;
+
+        const myName = String(state.currentUser?.name || "").trim();
+
+        try {
+            const { error } = await supabaseClient
+                .from("messages")
+                .insert([
+                    {
+                        ad_id: adId,
+                        ad_title: adTitle,
+                        sender_name: myName,
+                        receiver_name: receiverName,
+                        message_text: replyText,
+                        is_read: false
+                    }
+                ]);
+
+            if (error) throw error;
+            alert("Хариу амжилттай илгээгдлээ!");
+        } catch (error) {
+            console.error("Reply error:", error);
+            alert("Хариу илгээхэд алдаа гарлаа.");
+        }
+    }
+
     function bindEvents() {
         el.saveUserBtn.addEventListener("click", () => {
             openAuthModal("login");
@@ -2055,3 +2108,32 @@
     init();
     syncTopModeButtons();
 })();
+
+window.replyToMessage = async function (receiverName, adId, adTitle) {
+    const replyText = prompt(`${receiverName}-д хариу бичих:`);
+
+    if (!replyText || !replyText.trim()) return;
+
+    const myName = String(state.currentUser?.name || "").trim();
+
+    try {
+        const { error } = await supabaseClient
+            .from("messages")
+            .insert([
+                {
+                    ad_id: adId,
+                    ad_title: adTitle,
+                    sender_name: myName,
+                    receiver_name: receiverName,
+                    message_text: replyText,
+                    is_read: false
+                }
+            ]);
+
+        if (error) throw error;
+        alert("Хариу амжилттай илгээгдлээ!");
+    } catch (error) {
+        console.error("Reply error:", error);
+        alert("Хариу илгээхэд алдаа гарлаа.");
+    }
+};

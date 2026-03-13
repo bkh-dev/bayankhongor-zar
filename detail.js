@@ -446,6 +446,7 @@ if (sendMessageBtn) {
     try {
       await insertMessageToSupabase({
         ad_id: currentAd.id,
+        ad_title: currentAd.title || "Гарчиггүй зар",
         seller_name: currentAd.seller || "Хэрэглэгч",
         buyer_name: buyerName,
         message: buyerMessage
