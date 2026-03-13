@@ -127,7 +127,7 @@ async function insertMessageToSupabase(messageRow) {
     .insert([messageRow]);
 
   if (error) {
-    console.error("Supabase message insert error:", error);
+    console.error("Supabase message insert error:", JSON.stringify(error, null, 2));
     throw error;
   }
 }
@@ -451,6 +451,7 @@ if (sendMessageBtn) {
         message: buyerMessage
       });
 
+
       showToast("Мессеж амжилттай илгээгдлээ", "success");
 
       if (contactModal) {
@@ -460,8 +461,8 @@ if (sendMessageBtn) {
       if (buyerNameInput) buyerNameInput.value = "";
       if (buyerMessageInput) buyerMessageInput.value = "";
     } catch (error) {
-      console.error("sendMessageBtn error:", error);
-      showToast("Supabase мессеж илгээхэд алдаа гарлаа.", "error");
+      console.error("sendMessageBtn error:", JSON.stringify(error, null, 2));
+      showToast(error?.message || "Supabase мессеж илгээхэд алдаа гарлаа.", "error");
     }
   };
 }
