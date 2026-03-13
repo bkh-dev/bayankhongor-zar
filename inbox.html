@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мессеж - Bayankhongor.mn</title>
+    <link rel="stylesheet" href="style.css"> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .inbox-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .message-tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .tab-btn { padding: 10px 20px; border: none; background: #f0f0f0; cursor: pointer; border-radius: 20px; font-weight: bold; transition: 0.3s; }
+        .tab-btn.active { background: #ff2b1c; color: white; }
+        .message-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 12px; margin-bottom: 15px; position: relative; }
+        .msg-header { display: flex; justify-content: space-between; font-size: 0.85em; color: #777; margin-bottom: 8px; }
+        .msg-title { font-weight: bold; color: #222; margin-bottom: 10px; display: block; text-decoration: none; }
+        .msg-text { color: #444; line-height: 1.5; background: #f9f9f9; padding: 12px; border-radius: 8px; border-left: 4px solid #ff2b1c; }
+        .no-msg { text-align: center; color: #999; padding: 100px 0; }
+        .back-btn { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #ff2b1c; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="inbox-container">
+        <a href="index.html" class="back-btn">← Буцах</a>
+        <h1>Миний мессежүүд</h1>
+        
+        <div class="message-tabs">
+            <button class="tab-btn active" id="receivedBtn" onclick="switchTab('received')">Ирсэн мессеж</button>
+            <button class="tab-btn" id="sentBtn" onclick="switchTab('sent')">Илгээсэн мессеж</button>
+        </div>
+
+        <div id="loading" style="text-align: center; display: none;">Ачаалж байна...</div>
+        <div id="messageList"></div>
+    </div>
+
+    <script src="inbox.js"></script>
+</body>
+</html>
