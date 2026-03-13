@@ -574,6 +574,45 @@
         openAuthModal("login");
         return false;
     }
+    function getCurrentUsername() {
+        const saved = localStorage.getItem("bh_session_user");
+        if (!saved) return "";
+        try {
+            const user = JSON.parse(saved);
+            return user.name || user.phone || "";
+        } catch { return ""; }
+    }
+
+    async function checkNewMessages() {
+        const myName = getCurrentUsername(); // Нэвтэрсэн хэрэглэгчийн нэр
+        if (!myName) return;
+
+        // receiver_name нь 'би' бөгөөд is_read нь 'false' байх мессежүүдийг тоолох
+        const { count, error } = await supabaseClient
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('receiver_name', myName)
+            .eq('is_read', false);
+
+        if (error) {
+            console.error("Мэдэгдэл шалгахад алдаа гарлаа:", error);
+            return;
+        }
+
+        const badge = document.getElementById("msgBadge");
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = "inline-block"; // Тоо байгаа бол харуулна
+            } else {
+                badge.style.display = "none"; // Байхгүй бол нууна
+            }
+        }
+    }
+
+    // 30 секунд тутамд шинэ мессеж байгаа эсэхийг шалгана
+    setInterval(checkNewMessages, 30000);
+    checkNewMessages();
 
     // -------------------------
     // Seed

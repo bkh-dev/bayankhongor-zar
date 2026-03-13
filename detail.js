@@ -1,113 +1,21 @@
+/**
+ * BAYANKHONGOR.MN - Detail Page JavaScript
+ * Gemini AI-аар сайжруулав.
+ */
+
+// --- ТОГТМОЛ УТГУУД ---
 const ADS_KEY = "bh_ads";
 const FAVORITES_KEY = "bh_favorites";
 const THEME_KEY = "bh_theme";
 const INBOX_KEY = "bayankhongor_inbox_messages";
-const SUPABASE_URL = "https://dtxrbjppxyggjkpybdcu.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_YGhtBnurAg3otWaBMXKjvQ_TQRQkvc9";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const SESSION_KEY = "bh_session_user";
 const CURRENT_USER_KEY = "bh_current_user";
 
-function normalizePrice(value) {
-  return Number(String(value || "").replaceAll(",", "").replaceAll("₮", "").trim()) || 0;
-}
+const SUPABASE_URL = "https://dtxrbjppxyggjkpybdcu.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_YGhtBnurAg3otWaBMXKjvQ_TQRQkvc9";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function formatPrice(value) {
-  return normalizePrice(value).toLocaleString("en-US") + "₮";
-}
-
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "Огноо байхгүй";
-
-  return date.toLocaleDateString("mn-MN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  });
-}
-
-function maskPhone(phone) {
-  const value = String(phone || "").trim();
-
-  if (value.length < 4) {
-    return "Утас байхгүй";
-  }
-
-  return value.slice(0, 4) + "****";
-}
-
-function getAdIdFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  return Number(params.get("id"));
-}
-
-function getAdsFromStorage() {
-  const savedAds = localStorage.getItem(ADS_KEY);
-  if (!savedAds) return [];
-
-  try {
-    const parsed = JSON.parse(savedAds);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function increaseViewCount(adId) {
-  const ads = getAdsFromStorage();
-
-  const updatedAds = ads.map((item) => {
-    if (Number(item.id) === Number(adId)) {
-      return {
-        ...item,
-        views: (Number(item.views) || 0) + 1
-      };
-    }
-    return item;
-  });
-
-  localStorage.setItem(ADS_KEY, JSON.stringify(updatedAds));
-  return updatedAds;
-}
-
-
-function getFavoriteIds() {
-  const saved = localStorage.getItem(FAVORITES_KEY);
-  if (!saved) return [];
-
-  try {
-    const parsed = JSON.parse(saved);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveFavoriteIds(ids) {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids));
-}
-
-function getInboxMessages() {
-  const saved = localStorage.getItem(INBOX_KEY);
-  if (!saved) return [];
-
-  try {
-    const parsed = JSON.parse(saved);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveInboxMessages(messages) {
-  localStorage.setItem(INBOX_KEY, JSON.stringify(messages));
-}
-
-function isFavorite(adId) {
-  return getFavoriteIds().includes(adId);
-}
-
+// --- ЭЛЕМЕНТҮҮД ---
 const detailContainer = document.getElementById("detailContainer");
 const favoriteBtn = document.getElementById("favoriteBtn");
 const shareBtn = document.getElementById("shareBtn");
@@ -125,42 +33,49 @@ const sendMessageBtn = document.getElementById("sendMessageBtn");
 const toastContainer = document.getElementById("toastContainer");
 const detailAuthStatus = document.getElementById("detailAuthStatus");
 
+// --- ТУСЛАХ ФУНКЦҮҮД ---
+function normalizePrice(value) {
+  return Number(String(value || "").replaceAll(",", "").replaceAll("₮", "").trim()) || 0;
+}
+
+function formatPrice(value) {
+  return normalizePrice(value).toLocaleString("en-US") + "₮";
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "Огноо байхгүй";
+  return date.toLocaleDateString("mn-MN", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
+
+function maskPhone(phone) {
+  const value = String(phone || "").trim();
+  return value.length < 4 ? "Утас байхгүй" : value.slice(0, 4) + "****";
+}
+
+function getAdIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("id") || "";
+}
+
 function showToast(message, type = "info") {
   if (!toastContainer) return;
-
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
   toast.textContent = message;
-
   toastContainer.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 2500);
+  setTimeout(() => toast.remove(), 2500);
 }
 
+// --- ХЭРЭГЛЭГЧИЙН ХЭСЭГ ---
 function getSessionUser() {
-  const saved = localStorage.getItem(SESSION_KEY);
-  if (!saved) return null;
-
-  try {
-    return JSON.parse(saved);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { return null; }
 }
 
 function getCurrentUsername() {
   const sessionUser = getSessionUser();
-
-  if (sessionUser && sessionUser.name) {
-    return String(sessionUser.name).trim();
-  }
-
-  if (sessionUser && sessionUser.phone) {
-    return String(sessionUser.phone).trim();
-  }
-
+  if (sessionUser?.name) return String(sessionUser.name).trim();
+  if (sessionUser?.phone) return String(sessionUser.phone).trim();
   return localStorage.getItem(CURRENT_USER_KEY) || "";
 }
 
@@ -170,552 +85,326 @@ function isLoggedIn() {
 
 function requireAuth(message = "Эхлээд нэвтэрнэ үү.") {
   if (isLoggedIn()) return true;
-
   showToast(message, "error");
   return false;
 }
 
 function syncDetailAuthStatus() {
   if (!detailAuthStatus) return;
-
   const username = getCurrentUsername();
-  detailAuthStatus.textContent = username
-    ? `Хэрэглэгч: ${username}`
-    : "Хэрэглэгч: нэвтрээгүй";
+  detailAuthStatus.textContent = username ? `Хэрэглэгч: ${username}` : "Хэрэглэгч: нэвтрээгүй";
 }
 
-function getSavedTheme() {
-  return localStorage.getItem(THEME_KEY) || "light";
-}
-
-function applyTheme(theme) {
-  if (theme === "dark") {
-    document.body.classList.add("dark-mode");
-    if (themeToggleBtn) themeToggleBtn.textContent = "Light mode";
-  } else {
-    document.body.classList.remove("dark-mode");
-    if (themeToggleBtn) themeToggleBtn.textContent = "Dark mode";
-  }
-}
-
-function toggleTheme() {
-  const currentTheme = getSavedTheme();
-  const newTheme = currentTheme === "dark" ? "light" : "dark";
-  localStorage.setItem(THEME_KEY, newTheme);
-  applyTheme(newTheme);
-}
-
-let phoneVisible = false;
-
-function updateFavoriteButton(adId) {
-  if (!favoriteBtn) return;
-
-  if (isFavorite(adId)) {
-    favoriteBtn.textContent = "❤ Хадгалсан";
-  } else {
-    favoriteBtn.textContent = "🤍 Хадгалах";
-  }
+// --- ХАДГАЛСАН ЗАРУУД (FAVORITES) ---
+function getFavoriteIds() {
+  try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; } catch { return []; }
 }
 
 function toggleFavorite(adId) {
   if (!requireAuth("Зар хадгалахын тулд нэвтэрнэ үү.")) return;
-  const favoriteIds = getFavoriteIds();
-
+  let favoriteIds = getFavoriteIds();
   if (favoriteIds.includes(adId)) {
-    const updated = favoriteIds.filter((id) => id !== adId);
-    saveFavoriteIds(updated);
+    favoriteIds = favoriteIds.filter(id => id !== adId);
   } else {
     favoriteIds.push(adId);
-    saveFavoriteIds(favoriteIds);
   }
-
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favoriteIds));
   updateFavoriteButton(adId);
 }
-async function copyCurrentLink() {
-  try {
-    await navigator.clipboard.writeText(window.location.href);
 
-    if (shareBtn) {
-      showToast("Линк хуулагдлаа", "success");
-      setTimeout(() => {
-        shareBtn.textContent = "Линк хуулах";
-      }, 1500);
-    }
-  } catch (error) {
-    showToast("Линк хуулах үед алдаа гарлаа", "error");
-  }
+function updateFavoriteButton(adId) {
+  if (!favoriteBtn) return;
+  favoriteBtn.textContent = getFavoriteIds().includes(adId) ? "❤ Хадгалсан" : "🤍 Хадгалах";
 }
 
-function getDetailImageHTML(ad) {
-  const images = Array.isArray(ad.images)
-    ? ad.images
-    : (ad.image ? [ad.image] : []);
-
-  if (images.length > 0) {
-    return `
-      <div class="detail-image-wrap">
-        ${ad.vip ? `<div class="vip-badge">VIP</div>` : ""}
-        <img class="detail-image" id="mainDetailImage" src="${images[0]}" alt="${ad.title}">
-      </div>
-
-      <div class="detail-thumbnails">
-        ${images.map((img, index) => `
-          <img
-            src="${img}"
-            alt="thumb-${index}"
-            class="detail-thumb"
-            onclick="changeDetailImage('${img}')"
-          >
-        `).join("")}
-      </div>
-    `;
-  }
-
-  return `
-    <div class="detail-image-wrap">
-      ${ad.vip ? `<div class="vip-badge">VIP</div>` : ""}
-      <div class="detail-no-image">Зураг байхгүй</div>
-    </div>
-  `;
-}
-
-function changeDetailImage(imageSrc) {
+// --- ЗУРАГ СОЛИХ ---
+window.changeDetailImage = function (imageSrc) {
   const mainImage = document.getElementById("mainDetailImage");
-  if (mainImage) {
-    mainImage.src = imageSrc;
-  }
-
-  document.querySelectorAll(".detail-thumb").forEach((thumb) => {
+  if (mainImage) mainImage.src = imageSrc;
+  document.querySelectorAll(".detail-thumb").forEach(thumb => {
     thumb.classList.toggle("active", thumb.getAttribute("src") === imageSrc);
   });
-}
+};
 
-function getRelatedImageHTML(ad) {
-  const firstImage = Array.isArray(ad.images) && ad.images.length > 0
-    ? ad.images[0]
-    : "";
-
-  if (firstImage) {
-    return `
-      <div class="related-image-wrap">
-        <img src="${firstImage}" alt="${ad.title}">
-      </div>
-    `;
-  }
-
-  return `
-    <div class="related-image-wrap">
-      <div class="related-no-image">Зураг байхгүй</div>
-    </div>
-  `;
-}
-
-function renderRelatedAds(currentAd, allAds) {
-  if (!relatedAdsContainer) return;
-
-  const currentCategory = String(currentAd.category || "").trim().toLowerCase();
-
-  const relatedAds = allAds.filter((item) => {
-    const itemCategory = String(item.category || "").trim().toLowerCase();
-    return Number(item.id) !== Number(currentAd.id) && itemCategory === currentCategory;
-  });
-
-  if (relatedAds.length === 0) {
-    relatedAdsContainer.innerHTML = `
-      <div class="related-section">
-        <div class="related-title">Ижил төстэй зарууд</div>
-        <div class="not-found">Ижил ангиллын өөр зар олдсонгүй.</div>
-      </div>
-    `;
-    return;
-  }
-
-  relatedAdsContainer.innerHTML = `
-    <div class="related-section">
-      <div class="related-title">Ижил төстэй зарууд</div>
-      <div class="related-grid">
-        ${relatedAds.slice(0, 3).map((ad) => `
-          <div class="related-card">
-            <a href="detail.html?id=${ad.id}">
-              ${getRelatedImageHTML(ad)}
-              <div class="related-content">
-                <div class="related-name">${ad.title || "Гарчиггүй зар"}</div>
-                <div class="related-price">${formatPrice(ad.price)}</div>
-                <div class="related-location">${ad.location || "Байршилгүй"}</div>
-              </div>
-            </a>
-          </div>
-        `).join("")}
-      </div>
-    </div>
-  `;
-}
-
-function renderSellerAds(currentAd, allAds) {
-  if (!sellerAdsContainer) return;
-
-  const currentSeller = String(currentAd.seller || "").trim().toLowerCase();
-
-  const sellerAds = allAds.filter((item) => {
-    const itemSeller = String(item.seller || "").trim().toLowerCase();
-    return Number(item.id) !== Number(currentAd.id) && itemSeller === currentSeller;
-  });
-
-  if (sellerAds.length === 0) {
-    sellerAdsContainer.innerHTML = `
-      <div class="seller-section">
-        <div class="seller-title">Энэ хэрэглэгчийн бусад зарууд</div>
-        <div class="not-found">Энэ хэрэглэгч өөр зар оруулаагүй байна.</div>
-      </div>
-    `;
-    return;
-  }
-
-  sellerAdsContainer.innerHTML = `
-    <div class="seller-section">
-      <div class="seller-title">Энэ хэрэглэгчийн бусад зарууд</div>
-      <div class="seller-grid">
-        ${sellerAds.slice(0, 3).map((ad) => `
-          <div class="seller-card">
-            <a href="detail.html?id=${ad.id}">
-              <div class="seller-image">
-                ${Array.isArray(ad.images) && ad.images.length > 0
-      ? `<img src="${ad.images[0]}" alt="${ad.title}">`
-      : `<div>Зураг байхгүй</div>`
-    }
-              </div>
-              <div class="seller-content">
-                <div class="seller-name">${ad.title || "Гарчиггүй зар"}</div>
-                <div class="seller-price">${formatPrice(ad.price)}</div>
-              </div>
-            </a>
-          </div>
-        `).join("")}
-      </div>
-    </div>
-  `;
-}
-function renderPrevNextAds(currentAd, allAds) {
-  if (!prevNextContainer) return;
-
-  const sortedAds = [...allAds].sort((a, b) => Number(a.id) - Number(b.id));
-  const currentIndex = sortedAds.findIndex((item) => Number(item.id) === Number(currentAd.id));
-
-  if (currentIndex === -1) {
-    prevNextContainer.innerHTML = "";
-    return;
-  }
-
-  const prevAd = currentIndex > 0 ? sortedAds[currentIndex - 1] : null;
-  const nextAd = currentIndex < sortedAds.length - 1 ? sortedAds[currentIndex + 1] : null;
-
-  if (!prevAd && !nextAd) {
-    prevNextContainer.innerHTML = "";
-    return;
-  }
-
-  prevNextContainer.innerHTML = `
-    <div class="prev-next-box">
-      ${prevAd ? `<a class="prev-next-link" href="detail.html?id=${prevAd.id}">← Өмнөх зар</a>` : ""}
-      ${nextAd ? `<a class="prev-next-link" href="detail.html?id=${nextAd.id}">Дараагийн зар →</a>` : ""}
-    </div>
-  `;
-}
-
-if (closeContactModal && contactModal) {
-  closeContactModal.onclick = function () {
-    contactModal.classList.remove("show");
-  };
-}
-
-if (contactModal) {
-  contactModal.addEventListener("click", function (event) {
-    if (event.target === contactModal) {
-      contactModal.classList.remove("show");
-    }
-  });
-}
-
-if (sendMessageBtn) {
-  sendMessageBtn.onclick = function () {
-    if (!requireAuth("Мессеж илгээхийн тулд нэвтэрнэ үү.")) return;
-
-    const buyerName = getCurrentUsername();
-    const buyerMessage = buyerMessageInput ? buyerMessageInput.value.trim() : "";
-
-    if (!buyerMessage) {
-      showToast("Мессежээ бичнэ үү", "error");
-      return;
-    }
-
-    const currentAdId = getAdIdFromUrl();
-    const ads = getAdsFromStorage();
-    const currentAd = ads.find((item) => Number(item.id) === Number(currentAdId));
-
-    const messages = getInboxMessages();
-
-    messages.unshift({
-      id: Date.now(),
-      adId: currentAd ? currentAd.id : "",
-      adTitle: currentAd ? currentAd.title : "Гарчиггүй зар",
-      sellerName: currentAd ? (currentAd.seller || "Хэрэглэгч") : "Хэрэглэгч",
-      buyerName,
-      message: buyerMessage,
-      createdAt: new Date().toLocaleString("mn-MN")
-    });
-
-    saveInboxMessages(messages);
-
-    showToast("Мессеж амжилттай илгээгдлээ", "success");
-    if (contactModal) {
-      contactModal.classList.remove("show");
-    }
-
-    if (buyerNameInput) buyerNameInput.value = "";
-    if (buyerMessageInput) buyerMessageInput.value = "";
-  };
-}
-
+// --- ҮНДСЭН FUNCTIONS ---
 async function renderAdDetail() {
   syncDetailAuthStatus();
-
   const adId = getAdIdFromUrl();
-
   if (!adId) {
-    if (favoriteBtn) favoriteBtn.style.display = "none";
-    if (shareBtn) shareBtn.style.display = "none";
-    detailContainer.innerHTML = `<div class="not-found"><h2>Зар олдсонгүй</h2><p>Энэ зар устсан эсвэл байхгүй байна.</p></div>`;
+    showNotFound();
     return;
   }
 
   detailContainer.innerHTML = `<div class="not-found"><p>Ачаалж байна...</p></div>`;
 
-  const { data: adRow, error } = await supabaseClient
-    .from("ads")
-    .select("*")
-    .eq("id", String(adId))
-    .single();
+  try {
+    // 1. Бүх зарыг татах
+    const { data: allAdsRaw, error: allAdsError } = await supabaseClient
+      .from("ads")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error || !adRow) {
-    console.error("Ad fetch error:", error);
-    if (favoriteBtn) favoriteBtn.style.display = "none";
-    if (shareBtn) shareBtn.style.display = "none";
-    detailContainer.innerHTML = `<div class="not-found"><h2>Зар олдсонгүй</h2><p>Энэ зар устсан эсвэл байхгүй байна.</p></div>`;
-    return;
+    if (allAdsError) throw allAdsError;
+
+    const allAds = (allAdsRaw || []).map(a => ({
+      id: a.id,
+      title: a.title || "Гарчиггүй зар",
+      price: Number(a.price || 0),
+      location: a.location || "Байршилгүй",
+      category: a.category || "Бусад",
+      subcategory: a.subcategory || "",
+      description: a.description || "Тайлбар байхгүй",
+      seller: a.seller_name || "Хэрэглэгч",
+      phone: a.seller_phone || "",
+      status: a.status || "Идэвхтэй",
+      vip: Boolean(a.vip),
+      views: Number(a.views || 0),
+      createdAt: a.created_at,
+      images: Array.isArray(a.images) ? a.images : []
+    }));
+
+    const ad = allAds.find(item => String(item.id) === String(adId));
+    if (!ad) {
+      showNotFound();
+      return;
+    }
+
+    // 2. Үзэлт нэмэх
+    await supabaseClient.from("ads").update({ views: ad.views + 1 }).eq("id", ad.id);
+
+    // 3. Контент гаргах
+    renderMainContent(ad);
+    renderPrevNextAds(ad, allAds);
+    renderRelatedAds(ad, allAds);
+    renderSellerAds(ad, allAds);
+
+    // 4. Listeners тохируулах
+    setupEventListeners(ad);
+
+  } catch (err) {
+    console.error("Fetch Error:", err);
+    showNotFound("Алдаа гарлаа. Дахин оролдоно уу.");
   }
+}
 
-  const ad = {
-    id: adRow.id,
-    title: adRow.title || "Гарчиггүй зар",
-    price: Number(adRow.price || 0),
-    location: adRow.location || "",
-    category: adRow.category || "",
-    subcategory: adRow.subcategory || "",
-    description: adRow.description || "",
-    seller: adRow.seller_name || "",
-    phone: adRow.seller_phone || "",
-    status: adRow.status || "Идэвхтэй",
-    vip: Boolean(adRow.vip),
-    top: Boolean(adRow.top),
-    views: Number(adRow.views || 0),
-    createdAt: adRow.created_at || "",
-    images: Array.isArray(adRow.images) ? adRow.images : []
-  };
-
-  // Views нэмэх
-  await supabaseClient
-    .from("ads")
-    .update({ views: ad.views + 1 })
-    .eq("id", ad.id);
-
-  // Related болон seller ads-д ашиглах
-  const { data: allAdsRaw } = await supabaseClient
-    .from("ads")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  const ads = (allAdsRaw || []).map((a) => ({
-    id: a.id,
-    title: a.title || "",
-    price: Number(a.price || 0),
-    location: a.location || "",
-    category: a.category || "",
-    subcategory: a.subcategory || "",
-    description: a.description || "",
-    seller: a.seller_name || "",
-    phone: a.seller_phone || "",
-    status: a.status || "Идэвхтэй",
-    vip: Boolean(a.vip),
-    top: Boolean(a.top),
-    views: Number(a.views || 0),
-    createdAt: a.created_at || "",
-    images: Array.isArray(a.images) ? a.images : []
-  }));
-
-  phoneVisible = false;
-
-  if (themeToggleBtn) {
-    themeToggleBtn.style.display = "inline-block";
-    themeToggleBtn.onclick = function () {
-      toggleTheme();
-    };
-  }
-
-  if (favoriteBtn) {
-    favoriteBtn.style.display = "inline-block";
-    updateFavoriteButton(adId);
-    favoriteBtn.onclick = function () {
-      toggleFavorite(adId);
-    };
-  }
-
-  if (shareBtn) {
-    shareBtn.style.display = "inline-block";
-    shareBtn.onclick = function () {
-      copyCurrentLink();
-    };
-  }
-
-  const images = ad.images;
+function renderMainContent(ad) {
+  const images = ad.images.length > 0 ? ad.images : [];
   const mainImage = images[0] || "";
 
   const specItems = [
-    ["Ангилал", ad.category || "Бусад"],
+    ["Ангилал", ad.category],
     ["Төрөл", ad.subcategory || "-"],
-    ["Статус", ad.status || "Идэвхтэй"],
-    ["Байршил", ad.location || "Байршилгүй"],
-    ["Зар оруулагч", ad.seller || "Хэрэглэгч"],
+    ["Статус", ad.status],
+    ["Байршил", ad.location],
+    ["Зар оруулагч", ad.seller],
     ["Утас", maskPhone(ad.phone)],
     ["Нийтэлсэн", formatDate(ad.createdAt)],
-    ["Үзэлт", String(ad.views || 0)],
-    ["Зарын ID", String(ad.id)]
+    ["Үзэлт", ad.views + 1],
+    ["ID", ad.id]
   ];
 
   detailContainer.innerHTML = `
         <div class="detail-topbar">
             <div class="detail-title-box">
-                <div class="title">${ad.title}</div>
-                <div class="detail-submeta">
-                    ${ad.location || "Байршилгүй"}<br>
-                    Нийтэлсэн: ${formatDate(ad.createdAt)} · Зарын дугаар: ${ad.id}
-                </div>
+                <h1 class="title">${ad.title}</h1>
+                <div class="detail-submeta">${ad.location} · ${formatDate(ad.createdAt)}</div>
             </div>
         </div>
-
         <div class="detail-shell">
             <div class="detail-main">
                 <div class="detail-card">
-                    ${mainImage ? `
-                        <div class="detail-image-wrap">
-                            <img class="detail-image" id="mainDetailImage" src="${mainImage}" alt="${ad.title}">
-                        </div>
-                    ` : `
-                        <div class="detail-image-wrap">
-                            <div class="detail-no-image">Зураг байхгүй</div>
-                        </div>
-                    `}
+                    <div class="detail-image-wrap">
+                        ${ad.vip ? '<div class="vip-badge">VIP</div>' : ''}
+                        ${mainImage ? `<img class="detail-image" id="mainDetailImage" src="${mainImage}">` : '<div class="detail-no-image">Зураг байхгүй</div>'}
+                    </div>
                     ${images.length > 1 ? `
                         <div class="detail-thumbnails">
-                            ${images.map((img, index) => `
-                                <img
-                                    src="${img}"
-                                    alt="thumb-${index}"
-                                    class="detail-thumb ${index === 0 ? "active" : ""}"
-                                    onclick="changeDetailImage('${img.replaceAll("'", "\\'")}')"
-                                >
-                            `).join("")}
+                            ${images.map((img, i) => `<img src="${img}" class="detail-thumb ${i === 0 ? 'active' : ''}" onclick="changeDetailImage('${img}')">`).join("")}
                         </div>
                     ` : ""}
                 </div>
-
                 <div class="detail-actions-inline">
                     <button id="showPhoneBtn" class="favorite-btn" style="background:#ff2b1c;">Дугаар харах</button>
-                    <button id="openContactModalBtn" class="favorite-btn" style="background:#ff2b1c;">Чатлах</button>
+                    <button id="openContactModalBtn" class="favorite-btn" style="background:#2563eb;">Чатлах</button>
                 </div>
-
                 <div class="detail-specs">
                     <div class="detail-specs-grid">
-                        ${specItems.map(([label, value]) => `
-                            <div class="detail-spec-item">
-                                <div class="detail-spec-label">${label}</div>
-                                <div class="detail-spec-value">${value}</div>
-                            </div>
-                        `).join("")}
+                        ${specItems.map(([l, v]) => `<div class="detail-spec-item"><div class="detail-spec-label">${l}</div><div class="detail-spec-value">${v}</div></div>`).join("")}
                     </div>
                 </div>
-
                 <div class="detail-description-box">
-                    <div class="detail-description-title">Дэлгэрэнгүй мэдээлэл</div>
-                    <div class="description">${ad.description || "Тайлбар байхгүй"}</div>
+                    <div class="detail-description-title">Тайлбар</div>
+                    <div class="description">${ad.description.replace(/\n/g, '<br>')}</div>
                 </div>
             </div>
-
             <aside class="detail-side">
                 <div class="detail-side-card">
-                    <div class="detail-side-price">
-                        ${formatPrice(ad.price)}
-                        <span class="detail-side-location">${ad.location || ""}</span>
-                    </div>
+                    <div class="detail-side-price">${formatPrice(ad.price)}</div>
                     <button id="sideShowPhoneBtn" class="detail-cta-btn phone">Дугаар харах</button>
-                    <button id="sideChatBtn" class="detail-cta-btn chat">Чатлах</button>
-                    <div class="detail-warning">
-                        Луйвраас үргэлж сэрэмжтэй байгаарай. Баталгаагүй урьдчилгаа бүү шилжүүлээрэй.
-                    </div>
+                    <button id="sideChatBtn" class="detail-cta-btn chat" style="background:#2563eb;">Чатлах</button>
+                    <div class="detail-warning">⚠️ Урьдчилгаа мөнгө бүү шилжүүлээрэй!</div>
                 </div>
-
                 <div class="detail-side-card">
-                    <div class="detail-seller-name">${ad.seller || "Хэрэглэгч"}</div>
-                    <div class="detail-seller-meta">
-                        Энэ хэрэглэгчийн идэвхтэй заруудыг доороос харж болно.
-                    </div>
+                    <div class="detail-seller-name">${ad.seller}</div>
+                    <div class="detail-seller-meta">Энэ хэрэглэгчийн бусад зарууд доор харагдаж байна.</div>
                 </div>
             </aside>
         </div>
     `;
-
-  const phoneTextValue = ad.phone || "Утас байхгүй";
-  const showPhoneBtn = document.getElementById("showPhoneBtn");
-  const sideShowPhoneBtn = document.getElementById("sideShowPhoneBtn");
-  const openContactModalBtn = document.getElementById("openContactModalBtn");
-  const sideChatBtn = document.getElementById("sideChatBtn");
-
-  function handlePhoneToggle() {
-    if (!phoneVisible) {
-      showToast(`Утас: ${phoneTextValue}`, "success");
-      if (showPhoneBtn) showPhoneBtn.textContent = phoneTextValue;
-      if (sideShowPhoneBtn) sideShowPhoneBtn.textContent = phoneTextValue;
-      phoneVisible = true;
-    } else {
-      if (showPhoneBtn) showPhoneBtn.textContent = "Дугаар харах";
-      if (sideShowPhoneBtn) sideShowPhoneBtn.textContent = "Дугаар харах";
-      phoneVisible = false;
-    }
-  }
-
-  if (showPhoneBtn) showPhoneBtn.onclick = handlePhoneToggle;
-  if (sideShowPhoneBtn) sideShowPhoneBtn.onclick = handlePhoneToggle;
-
-  function openChatModal() {
-    if (!requireAuth("Худалдагчтай холбогдохын тулд нэвтэрнэ үү.")) return;
-    if (contactModal) contactModal.classList.add("show");
-    if (modalSellerName) modalSellerName.textContent = ad.seller || "Хэрэглэгч";
-    if (modalSellerPhone) modalSellerPhone.textContent = ad.phone || "Утас байхгүй";
-    if (buyerNameInput) {
-      buyerNameInput.value = getCurrentUsername();
-      buyerNameInput.readOnly = true;
-    }
-    if (buyerMessageInput) {
-      buyerMessageInput.value = `Сайн байна уу, "${ad.title}" зарыг сонирхож байна.`;
-    }
-  }
-
-  if (openContactModalBtn) openContactModalBtn.onclick = openChatModal;
-  if (sideChatBtn) sideChatBtn.onclick = openChatModal;
-
-  renderPrevNextAds(ad, ads);
-  renderRelatedAds(ad, ads);
-  renderSellerAds(ad, ads);
 }
 
+function setupEventListeners(ad) {
+  let phoneHidden = true;
+  const phoneNum = ad.phone || "Утас байхгүй";
+
+  const handlePhone = () => {
+    if (phoneHidden && ad.phone) {
+      document.querySelectorAll("#showPhoneBtn, #sideShowPhoneBtn").forEach(btn => {
+        btn.innerHTML = `📞 <a href="tel:${phoneNum}" style="color:white; text-decoration:none">${phoneNum}</a>`;
+      });
+      phoneHidden = false;
+    } else if (!ad.phone) {
+      showToast("Утасны дугаар бүртгэгдээгүй байна", "error");
+    }
+  };
+
+  if (document.getElementById("showPhoneBtn")) document.getElementById("showPhoneBtn").onclick = handlePhone;
+  if (document.getElementById("sideShowPhoneBtn")) document.getElementById("sideShowPhoneBtn").onclick = handlePhone;
+
+  const openChat = () => {
+    if (!requireAuth()) return;
+    contactModal.classList.add("show");
+    modalSellerName.textContent = ad.seller;
+    modalSellerPhone.textContent = ad.phone;
+    buyerNameInput.value = getCurrentUsername();
+    buyerMessageInput.value = `Сайн байна уу, "${ad.title}" зарыг сонирхож байна.`;
+  };
+
+  if (document.getElementById("openContactModalBtn")) document.getElementById("openContactModalBtn").onclick = openChat;
+  if (document.getElementById("sideChatBtn")) document.getElementById("sideChatBtn").onclick = openChat;
+
+  if (favoriteBtn) {
+    updateFavoriteButton(ad.id);
+    favoriteBtn.onclick = () => toggleFavorite(ad.id);
+  }
+  if (shareBtn) shareBtn.onclick = () => {
+    navigator.clipboard.writeText(window.location.href);
+    showToast("Линк хуулагдлаа", "success");
+  };
+  if (themeToggleBtn) themeToggleBtn.onclick = toggleTheme;
+}
+
+// --- RELATED & OTHER ADS ---
+function renderRelatedAds(currentAd, allAds) {
+  if (!relatedAdsContainer) return;
+  const related = allAds.filter(a => a.category === currentAd.category && a.id !== currentAd.id).slice(0, 3);
+  relatedAdsContainer.innerHTML = `<div class="related-section"><div class="related-title">Ижил төстэй зарууд</div><div class="related-grid">${related.length ? related.map(ad => `
+        <div class="related-card"><a href="detail.html?id=${ad.id}">
+            <div class="related-image-wrap">${ad.images[0] ? `<img src="${ad.images[0]}">` : 'Зураггүй'}</div>
+            <div class="related-content">
+                <div class="related-name">${ad.title}</div>
+                <div class="related-price">${formatPrice(ad.price)}</div>
+            </div>
+        </a></div>`).join("") : "Олдсонгүй"}</div></div>`;
+}
+
+function renderSellerAds(currentAd, allAds) {
+  if (!sellerAdsContainer) return;
+  const others = allAds.filter(a => a.seller === currentAd.seller && a.id !== currentAd.id).slice(0, 3);
+  sellerAdsContainer.innerHTML = `<div class="seller-section"><div class="seller-title">Энэ хэрэглэгчийн бусад зарууд</div><div class="seller-grid">${others.length ? others.map(ad => `
+        <div class="seller-card"><a href="detail.html?id=${ad.id}">
+            <div class="seller-image">${ad.images[0] ? `<img src="${ad.images[0]}">` : 'Зураггүй'}</div>
+            <div class="seller-content">
+                <div class="seller-name">${ad.title}</div>
+                <div class="seller-price">${formatPrice(ad.price)}</div>
+            </div>
+        </a></div>`).join("") : "Өөр зар байхгүй"}</div></div>`;
+}
+
+function renderPrevNextAds(currentAd, allAds) {
+  if (!prevNextContainer) return;
+  const sorted = [...allAds].sort((a, b) => Number(a.id) - Number(b.id));
+  const idx = sorted.findIndex(a => String(a.id) === String(currentAd.id));
+  const prev = sorted[idx - 1], next = sorted[idx + 1];
+  prevNextContainer.innerHTML = `<div class="prev-next-box">
+        ${prev ? `<a href="detail.html?id=${prev.id}">← Өмнөх</a>` : ""}
+        ${next ? `<a href="detail.html?id=${next.id}">Дараагийн →</a>` : ""}
+    </div>`;
+}
+
+// --- THEME & UTILS ---
+function getSavedTheme() { return localStorage.getItem(THEME_KEY) || "light"; }
+function applyTheme(theme) {
+  document.body.classList.toggle("dark-mode", theme === "dark");
+  if (themeToggleBtn) themeToggleBtn.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
+}
+function toggleTheme() {
+  const newTheme = getSavedTheme() === "dark" ? "light" : "dark";
+  localStorage.setItem(THEME_KEY, newTheme);
+  applyTheme(newTheme);
+}
+
+function showNotFound(msg = "Зар олдсонгүй") {
+  detailContainer.innerHTML = `<div class="not-found"><h2>${msg}</h2><p>Энэ зар устсан эсвэл байхгүй байна.</p><a href="index.html">Нүүр хуудас руу буцах</a></div>`;
+}
+
+// --- CONTACT MODAL ---
+if (closeContactModal) closeContactModal.onclick = () => contactModal.classList.remove("show");
+window.onclick = (e) => { if (e.target === contactModal) contactModal.classList.remove("show"); };
+
+if (sendMessageBtn) {
+  sendMessageBtn.onclick = async function () {
+    if (!requireAuth("Мессеж илгээхийн тулд нэвтэрнэ үү.")) return;
+
+    const msgText = buyerMessageInput ? buyerMessageInput.value.trim() : "";
+    if (!msgText) {
+      showToast("Мессежээ бичнэ үү", "error");
+      return;
+    }
+
+    // Зарын мэдээллийг авах (Худалдагчийн нэр хэрэгтэй)
+    const adId = getAdIdFromUrl();
+
+    // Түр хүлээлгэх төлөв
+    sendMessageBtn.disabled = true;
+    sendMessageBtn.textContent = "Илгээж байна...";
+
+    try {
+      // 1. Одоогийн зарын мэдээллийг дахин шалгаж худалдагчийн нэрийг авах
+      const { data: adData } = await supabaseClient
+        .from("ads")
+        .select("seller_name")
+        .eq("id", adId)
+        .single();
+
+      // 2. Supabase-рүү мессежийг илгээх
+      const { error } = await supabaseClient
+        .from("messages")
+        .insert([{
+          ad_id: adId,
+          sender_name: getCurrentUsername(),
+          receiver_name: adData?.seller_name || "Хэрэглэгч",
+          message_text: msgText
+        }]);
+
+      if (error) throw error;
+
+      showToast("Мессеж амжилттай илгээгдлээ", "success");
+
+      // Модалыг хаах, цэвэрлэх
+      if (contactModal) contactModal.classList.remove("show");
+      if (buyerMessageInput) buyerMessageInput.value = "";
+
+    } catch (error) {
+      console.error("Message error:", error);
+      showToast("Мессеж илгээхэд алдаа гарлаа", "error");
+    } finally {
+      sendMessageBtn.disabled = false;
+      sendMessageBtn.textContent = "Илгээх";
+    }
+  };
+}
+
+// ЭХЛҮҮЛЭХ
 applyTheme(getSavedTheme());
 renderAdDetail();
