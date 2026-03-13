@@ -1,15 +1,7 @@
-const SUPABASE_URL = "https://dtxrbjppxyggjkpybdcu.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_YGhtBnurAg3otWaBMXKjvQ_TQRQkvc9";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.BH.getSupabaseClient();
 
-// Нэвтэрсэн хэрэглэгчийн нэрийг авах
 function getCurrentUsername() {
-    const saved = localStorage.getItem("bh_session_user");
-    if (!saved) return "";
-    try {
-        const user = JSON.parse(saved);
-        return (user.name || user.phone || "").trim();
-    } catch { return ""; }
+    return window.BH.getCurrentUsername();
 }
 
 let currentTab = 'received';

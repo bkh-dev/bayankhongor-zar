@@ -5,9 +5,7 @@ const INBOX_KEY = "bayankhongor_inbox_messages";
 const SESSION_KEY = "bh_session_user";
 const CURRENT_USER_KEY = "bh_current_user";
 
-const SUPABASE_URL = "https://dtxrbjppxyggjkpybdcu.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_YGhtBnurAg3otWaBMXKjvQ_TQRQkvc9";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.BH.getSupabaseClient();
 
 function normalizePrice(value) {
   return Number(String(value || "").replaceAll(",", "").replaceAll("₮", "").trim()) || 0;
@@ -162,29 +160,8 @@ function showToast(message, type = "info") {
   }, 2500);
 }
 
-function getSessionUser() {
-  const saved = localStorage.getItem(SESSION_KEY);
-  if (!saved) return null;
-
-  try {
-    return JSON.parse(saved);
-  } catch {
-    return null;
-  }
-}
-
 function getCurrentUsername() {
-  const sessionUser = getSessionUser();
-
-  if (sessionUser && sessionUser.name) {
-    return String(sessionUser.name).trim();
-  }
-
-  if (sessionUser && sessionUser.phone) {
-    return String(sessionUser.phone).trim();
-  }
-
-  return localStorage.getItem(CURRENT_USER_KEY) || "";
+  return window.BH.getCurrentUsername() || localStorage.getItem(CURRENT_USER_KEY) || "";
 }
 
 function isLoggedIn() {

@@ -9,9 +9,7 @@
     const INBOX_KEY = "bayankhongor_inbox_messages";
     const UI_STATE_KEY = "bh_ui_state";
 
-    const SUPABASE_URL = "https://dtxrbjppxyggjkpybdcu.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_YGhtBnurAg3otWaBMXKjvQ_TQRQkvc9";
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = window.BH.getSupabaseClient();
 
     const FAVORITES_KEY = "bh_favorites";
     const COMPARED_KEY = "bh_compared";
@@ -645,37 +643,6 @@
             return user.name || user.phone || "";
         } catch { return ""; }
     }
-
-    async function checkNewMessages() {
-        const myName = getCurrentUsername(); // Нэвтэрсэн хэрэглэгчийн нэр
-        if (!myName) return;
-
-        // receiver_name нь 'би' бөгөөд is_read нь 'false' байх мессежүүдийг тоолох
-        const { count, error } = await supabaseClient
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('receiver_name', myName)
-            .eq('is_read', false);
-
-        if (error) {
-            console.error("Мэдэгдэл шалгахад алдаа гарлаа:", error);
-            return;
-        }
-
-        const badge = document.getElementById("msgBadge");
-        if (badge) {
-            if (count > 0) {
-                badge.textContent = count;
-                badge.style.display = "inline-block"; // Тоо байгаа бол харуулна
-            } else {
-                badge.style.display = "none"; // Байхгүй бол нууна
-            }
-        }
-    }
-
-    // 30 секунд тутамд шинэ мессеж байгаа эсэхийг шалгана
-    setInterval(checkNewMessages, 30000);
-    checkNewMessages();
 
     // -------------------------
     // Seed
@@ -1796,21 +1763,6 @@
         return data;
     }
 
-    async function loadProfileFromSupabase(userPhone) {
-        const { data, error } = await supabaseClient
-            .from("profiles")
-            .select("*")
-            .eq("phone", userPhone)
-            .maybeSingle();
-
-        if (error) {
-            console.error("Supabase profile load error:", error);
-            return null;
-        }
-
-        return data || null;
-    }
-
     async function phoneExistsInSupabase(phone) {
         const { data, error } = await supabaseClient
             .from("profiles")
@@ -1824,37 +1776,6 @@
         }
 
         return Boolean(data);
-    }
-
-    async function updateProfileInSupabase(userPhone, updates) {
-        const { data, error } = await supabaseClient
-            .from("profiles")
-            .update(updates)
-            .eq("phone", userPhone)
-            .select()
-            .single();
-
-        if (error) {
-            console.error("Supabase profile update error:", error);
-            throw error;
-        }
-
-        return data;
-    }
-
-    async function loadProfileFromSupabase(userPhone) {
-        const { data, error } = await supabaseClient
-            .from("profiles")
-            .select("*")
-            .eq("phone", userPhone)
-            .maybeSingle();
-
-        if (error) {
-            console.error("Supabase profile load error:", error);
-            return null;
-        }
-
-        return data || null;
     }
 
     async function addFavoriteToSupabase(userPhone, adId) {
@@ -2419,24 +2340,6 @@
                 state.currentRole = profileRow.role || state.currentRole;
             }
         }
-
-        if (userPhone) {
-            const profileRow = await loadProfileFromSupabase(userPhone);
-
-            if (profileRow) {
-                state.currentUser = profileRow.name || state.currentUser;
-                state.currentRole = profileRow.role || state.currentRole;
-            }
-        }
-
-        if (userPhone) {
-            const profileRow = await loadProfileFromSupabase(userPhone);
-
-            if (profileRow) {
-                state.currentUser = profileRow.name || state.currentUser;
-                state.currentRole = profileRow.role || state.currentRole;
-            }
-        }
         syncCurrentUserUI();
 
         if (el.roleSelect) {
@@ -2500,33 +2403,7 @@
 
     init();
     syncTopModeButtons();
+
+    // Expose reply helper for inline onclick usage
+    window.replyToMessage = replyToMessage;
 })();
-
-window.replyToMessage = async function (receiverName, adId, adTitle) {
-    const replyText = prompt(`${receiverName}-д хариу бичих:`);
-
-    if (!replyText || !replyText.trim()) return;
-
-    const myName = String(state.currentUser?.name || "").trim();
-
-    try {
-        const { error } = await supabaseClient
-            .from("messages")
-            .insert([
-                {
-                    ad_id: adId,
-                    ad_title: adTitle,
-                    sender_name: myName,
-                    receiver_name: receiverName,
-                    message_text: replyText,
-                    is_read: false
-                }
-            ]);
-
-        if (error) throw error;
-        alert("Хариу амжилттай илгээгдлээ!");
-    } catch (error) {
-        console.error("Reply error:", error);
-        alert("Хариу илгээхэд алдаа гарлаа.");
-    }
-};
