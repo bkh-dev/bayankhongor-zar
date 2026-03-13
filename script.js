@@ -457,7 +457,7 @@
         const name = el.authNameInput.value.trim();
         const phone = el.authPhoneInput.value.trim();
         const password = el.authPasswordInput.value.trim();
-        const role = el.authRoleSelect.value || "seller";
+        const role = el.authRoleSelect.value;
 
         if (!name || !phone || !password) {
             showToast("Нэр, утасны дугаар, нууц үгээ бүрэн оруулна уу.", "error");
@@ -469,51 +469,42 @@
             return;
         }
 
-        if (password.length < 6) {
-            showToast("Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.", "error");
-            return;
-        }
+        const users = getUsers();
+        const exists = users.some(
+            (user) => String(user.phone || "").trim() === phone
+        );
 
-        // Утас давхардсан эсэх шалгах
-        // Утас давхардсан эсэх шалгах
-        const { data: existing, error: checkError } = await supabaseClient
-            .from("profiles")
-            .select("id")
-            .eq("phone", phone)
-            .maybeSingle(); // single() биш maybeSingle() — олдохгүй үед error гаргахгүй
-
-        if (checkError) {
-            console.error("Check error:", checkError);
-            showToast("Шалгахад алдаа гарлаа: " + checkError.message, "error");
-            return;
-        }
-
-        if (existing) {
+        if (exists) {
             showToast("Ийм утасны дугаартай хэрэглэгч бүртгэлтэй байна.", "error");
             return;
         }
 
-        // Шинэ хэрэглэгч үүсгэх
-        const { data: newProfile, error: insertError } = await supabaseClient
-            .from("profiles")
-            .insert({ name, phone, password, role })
-            .select()
-            .single();
+        const newUser = {
+            id: id(),
+            name,
+            phone,
+            password,
+            role,
+            createdAt: new Date().toISOString()
+        };
 
-        if (insertError) {
-            console.error("Insert error:", insertError);
-            showToast("Бүртгэл үүсгэхэд алдаа гарлаа: " + insertError.message, "error");
-            return;
-        }
+        users.push(newUser);
+        saveUsers(users);
 
-        if (!newProfile) {
-            showToast("Бүртгэл үүсгэхэд алдаа гарлаа.", "error");
-            return;
-        }
+        await upsertProfileToSupabase({
+            name,
+            phone,
+            role
+        });
 
         state.currentUser = name;
         state.currentRole = role;
-        saveSessionUser({ name, phone, role, id: newProfile.id });
+
+        saveSessionUser({
+            name,
+            phone,
+            role
+        });
 
         saveAll();
         syncCurrentUserUI();
@@ -544,13 +535,19 @@
             return;
         }
 
-        state.currentUser = profile.name || profile.phone;
-        state.currentRole = profile.role || "seller";
+        const profileRow = await upsertProfileToSupabase({
+            name: foundUser.name || foundUser.phone,
+            phone: foundUser.phone || "",
+            role: foundUser.role || "seller"
+        });
+
+        state.currentUser = profileRow.name || foundUser.name || foundUser.phone;
+        state.currentRole = profileRow.role || foundUser.role || "seller";
+
         saveSessionUser({
-            name: profile.name || "",
-            phone: profile.phone || "",
-            role: state.currentRole,
-            id: profile.id
+            name: state.currentUser,
+            phone: foundUser.phone || "",
+            role: state.currentRole
         });
 
         saveAll();
@@ -1689,6 +1686,21 @@
 
         if (error) {
             console.error("Supabase profile update error:", error);
+            throw error;
+        }
+
+        return data;
+    }
+
+    async function upsertProfileToSupabase(profile) {
+        const { data, error } = await supabaseClient
+            .from("profiles")
+            .upsert([profile], { onConflict: "phone" })
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Supabase profile upsert error:", error);
             throw error;
         }
 
