@@ -85,31 +85,8 @@ async function loadAdsFromSupabase() {
   }));
 }
 
-async function increaseViewCount(adId) {
-  const ads = await loadAdsFromSupabase();
-  const currentAd = ads.find((item) => String(item.id) === String(adId));
-
-  if (!currentAd) {
-    return ads;
-  }
-
-  const nextViews = Number(currentAd.views || 0) + 1;
-
-  const { error } = await supabaseClient
-    .from("ads")
-    .update({ views: nextViews })
-    .eq("id", adId);
-
-  if (error) {
-    console.error("Supabase view update error:", error);
-    return ads;
-  }
-
-  return ads.map((item) =>
-    String(item.id) === String(adId)
-      ? { ...item, views: nextViews }
-      : item
-  );
+async function increaseViewCount() {
+  return await loadAdsFromSupabase();
 }
 
 function getFavoriteIds() {
@@ -145,18 +122,14 @@ function isFavorite(adId) {
 }
 
 async function insertMessageToSupabase(messageRow) {
-  const { data, error } = await supabaseClient
+  const { error } = await supabaseClient
     .from("messages")
-    .insert(messageRow)
-    .select()
-    .single();
+    .insert([messageRow]);
 
   if (error) {
     console.error("Supabase message insert error:", error);
     throw error;
   }
-
-  return data;
 }
 
 const detailContainer = document.getElementById("detailContainer");
@@ -393,8 +366,8 @@ function renderSellerAds(currentAd, allAds) {
             <a href="detail.html?id=${ad.id}">
               <div class="seller-image">
                 ${Array.isArray(ad.images) && ad.images.length > 0
-                  ? `<img src="${ad.images[0]}" alt="${ad.title}">`
-                  : `<div>Зураг байхгүй</div>`}
+      ? `<img src="${ad.images[0]}" alt="${ad.title}">`
+      : `<div>Зураг байхгүй</div>`}
               </div>
               <div class="seller-content">
                 <div class="seller-name">${ad.title || "Гарчиггүй зар"}</div>
