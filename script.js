@@ -1374,11 +1374,8 @@
     async function openInbox() {
         try {
             const messages = await loadMessagesFromSupabase();
-
-            // Одоо нэвтэрсэн байгаа хэрэглэгчийн нэр
             const currentName = String(state.currentUser?.name || "").trim().toLowerCase();
 
-            // Зөвхөн надад ирсэн мессежүүдийг шүүх
             const filteredMessages = messages.filter((m) => {
                 const receiverName = String(m.receiver_name || "").trim().toLowerCase();
                 return receiverName === currentName;
@@ -1389,15 +1386,16 @@
                     .slice(0, 20)
                     .map(
                         (m) => `
-                <div class="inbox-item" style="border-bottom: 1px solid #eee; padding: 15px; margin-bottom: 10px;">
+                <div class="inbox-item" style="border-bottom: 1px solid #eee; padding: 15px; margin-bottom: 10px; border-radius: 8px; ${!m.is_read ? 'background-color: #f0f7ff; border-left: 4px solid #007bff;' : ''}">
                     <div class="inbox-item-title" style="font-weight: bold; color: #ff2b1c;">
+                        ${!m.is_read ? '<span style="background: #007bff; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-right: 5px;">ШИНЭ</span>' : ''}
                         Зарын гарчиг: ${escapeHtml(m.ad_title || "Гарчиггүй зар")}
                     </div>
                     <div class="inbox-item-meta" style="font-size: 0.85em; color: #666; margin: 5px 0;">
                         Хэнээс: <strong>${escapeHtml(m.sender_name || "Хэрэглэгч")}</strong> 
                         • ${new Date(m.created_at).toLocaleString()}
                     </div>
-                    <div class="inbox-item-message" style="background: #f1f1f1; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                    <div class="inbox-item-message" style="background: white; padding: 10px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px;">
                         ${escapeHtml(m.message_text || "")}
                     </div>
                     <button onclick="window.replyToMessage('${(m.sender_name || "").replace(/'/g, "\\'")}', '${m.ad_id}', '${(m.ad_title || "Зар").replace(/'/g, "\\'")}')" 
@@ -1411,6 +1409,16 @@
                 : `<div class="empty-box" style="text-align:center; padding: 20px;">Танд ирсэн мессеж алга.</div>`;
 
             el.inboxModal.classList.add("show");
+
+            // УНШСАН БОЛГОЖ ШИНЭЧЛЭХ:
+            if (filteredMessages.some(m => !m.is_read)) {
+                await supabaseClient
+                    .from('messages')
+                    .update({ is_read: true })
+                    .eq('receiver_name', state.currentUser?.name)
+                    .eq('is_read', false);
+            }
+
         } catch (error) {
             console.error("openInbox error:", error);
             alert("Инбокс уншихад алдаа гарлаа.");
