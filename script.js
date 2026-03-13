@@ -1710,6 +1710,37 @@
         return data || null;
     }
 
+    async function updateProfileInSupabase(userPhone, updates) {
+        const { data, error } = await supabaseClient
+            .from("profiles")
+            .update(updates)
+            .eq("phone", userPhone)
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Supabase profile update error:", error);
+            throw error;
+        }
+
+        return data;
+    }
+
+    async function loadProfileFromSupabase(userPhone) {
+        const { data, error } = await supabaseClient
+            .from("profiles")
+            .select("*")
+            .eq("phone", userPhone)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Supabase profile load error:", error);
+            return null;
+        }
+
+        return data || null;
+    }
+
     async function addFavoriteToSupabase(userPhone, adId) {
         const { error } = await supabaseClient
             .from("favorites")
@@ -2246,6 +2277,15 @@
         if (userPhone) {
             const favoriteRows = await loadFavoritesFromSupabase(userPhone);
             state.favorites = new Set(favoriteRows.map((row) => row.ad_id));
+        }
+
+        if (userPhone) {
+            const profileRow = await loadProfileFromSupabase(userPhone);
+
+            if (profileRow) {
+                state.currentUser = profileRow.name || state.currentUser;
+                state.currentRole = profileRow.role || state.currentRole;
+            }
         }
 
         if (userPhone) {
