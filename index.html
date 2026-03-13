@@ -1911,6 +1911,56 @@
         #forgotPasswordModal.show {
             display: flex;
         }
+
+        .spec-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            justify-content: flex-end;
+            /* Текстийг голлуулах */
+        }
+
+        .spec-row label {
+            font-size: 13px;
+            color: #333;
+            width: 150px;
+            text-align: right;
+            margin-right: 15px;
+        }
+
+        .spec-row label sup {
+            color: red;
+            margin-left: 2px;
+        }
+
+        .spec-row select,
+        .spec-row input {
+            width: 300px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .input-unit-wrapper {
+            position: relative;
+            width: 300px;
+        }
+
+        .input-unit-wrapper input {
+            width: 100%;
+            padding-right: 40px;
+        }
+
+        .unit-text {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
     </style>
 </head>
 
