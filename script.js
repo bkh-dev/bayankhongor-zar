@@ -366,7 +366,7 @@
         el.profileNameInput.value = "";
     }
 
-    function updateProfileName() {
+    async function updateProfileName() {
         const newName = el.profileNameInput.value.trim();
         const currentPhone = getCurrentSessionPhone();
 
@@ -380,36 +380,27 @@
             return;
         }
 
-        const users = getUsers();
-        const userIndex = users.findIndex(
-            (user) => String(user.phone || "").trim() === currentPhone
-        );
+        try {
+            const updatedProfile = await updateProfileInSupabase(currentPhone, {
+                name: newName
+            });
 
-        if (userIndex === -1) {
-            showToast("Хэрэглэгчийн мэдээлэл олдсонгүй.", "error");
-            return;
+            const currentSession = getSessionUser() || {};
+            saveSessionUser({
+                ...currentSession,
+                name: updatedProfile.name || newName
+            });
+
+            state.currentUser = updatedProfile.name || newName;
+            syncCurrentUserUI();
+            closeProfileEdit();
+            resetForm();
+            renderAds();
+            showToast("Нэр амжилттай шинэчлэгдлээ.", "success");
+        } catch (error) {
+            console.error("updateProfileName error:", error);
+            showToast("Supabase profile шинэчлэхэд алдаа гарлаа.", "error");
         }
-
-        users[userIndex] = {
-            ...users[userIndex],
-            name: newName
-        };
-
-        saveUsers(users);
-
-        const currentSession = getSessionUser() || {};
-        saveSessionUser({
-            ...currentSession,
-            name: newName
-        });
-
-        state.currentUser = newName;
-        saveAll();
-        syncCurrentUserUI();
-        closeProfileEdit();
-        resetForm();
-        renderAds();
-        showToast("Нэр амжилттай шинэчлэгдлээ.", "success");
     }
 
     function syncProfileUI() {
@@ -1688,6 +1679,37 @@
         return data || null;
     }
 
+    async function updateProfileInSupabase(userPhone, updates) {
+        const { data, error } = await supabaseClient
+            .from("profiles")
+            .update(updates)
+            .eq("phone", userPhone)
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Supabase profile update error:", error);
+            throw error;
+        }
+
+        return data;
+    }
+
+    async function loadProfileFromSupabase(userPhone) {
+        const { data, error } = await supabaseClient
+            .from("profiles")
+            .select("*")
+            .eq("phone", userPhone)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Supabase profile load error:", error);
+            return null;
+        }
+
+        return data || null;
+    }
+
     async function addFavoriteToSupabase(userPhone, adId) {
         const { error } = await supabaseClient
             .from("favorites")
@@ -2224,6 +2246,15 @@
         if (userPhone) {
             const favoriteRows = await loadFavoritesFromSupabase(userPhone);
             state.favorites = new Set(favoriteRows.map((row) => row.ad_id));
+        }
+
+        if (userPhone) {
+            const profileRow = await loadProfileFromSupabase(userPhone);
+
+            if (profileRow) {
+                state.currentUser = profileRow.name || state.currentUser;
+                state.currentRole = profileRow.role || state.currentRole;
+            }
         }
 
         if (userPhone) {
