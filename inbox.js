@@ -1,16 +1,14 @@
-// --- ТОХИРГОО ---
 const SUPABASE_URL = "https://dtxrbjppxyggjkpybdcu.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_YGhtBnurAg3otWaBMXKjvQ_TQRQkvc9";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const SESSION_KEY = "bh_session_user";
-
+// Нэвтэрсэн хэрэглэгчийн нэрийг авах
 function getCurrentUsername() {
-    const saved = localStorage.getItem(SESSION_KEY);
+    const saved = localStorage.getItem("bh_session_user");
     if (!saved) return "";
     try {
         const user = JSON.parse(saved);
-        return user.name || user.phone || "";
+        return (user.name || user.phone || "").trim();
     } catch { return ""; }
 }
 
@@ -21,59 +19,49 @@ async function loadMessages() {
     const listEl = document.getElementById("messageList");
     const loadingEl = document.getElementById("loading");
 
-    // ШАЛГАХ 1: Таны нэвтэрсэн нэр юу байна?
-    console.log("Миний нэр (localStorage-аас):", myName);
-
     if (!myName) {
-        listEl.innerHTML = `<div class="no-msg">Та нэвтрээгүй байна. LocalStorage шалгана уу.</div>`;
+        listEl.innerHTML = `<div class="no-msg">Та нэвтрээгүй байна.</div>`;
         return;
     }
 
     loadingEl.style.display = "block";
+    listEl.innerHTML = "";
 
     try {
-        // ШАЛГАХ 2: Эхлээд шүүлтүүргүйгээр бүх мессежийг татаж үзэх
-        console.log("Supabase-ээс өгөгдөл татаж байна...");
-        let { data, error } = await supabaseClient
+        // Одоохондоо шүүлтүүр хийхгүйгээр БҮХ мессежийг татаж туршъя
+        const { data, error } = await supabaseClient
             .from("messages")
-            .select(`*, ads(title)`);
+            .select(`*, ads(title)`)
+            .order("created_at", { ascending: false });
 
         if (error) throw error;
 
-        console.log("Нийт олдсон мессежүүд (бүх хэрэглэгчийн):", data);
-
-        // ШАЛГАХ 3: Таны нэрээр шүүх (Гар аргаар)
+        // Зөвхөн надад хамаатайг нь шүүх
         const myMessages = data.filter(msg => {
             if (currentTab === 'received') {
-                return String(msg.receiver_name).trim() === String(myName).trim();
+                return msg.receiver_name === myName;
             } else {
-                return String(msg.sender_name).trim() === String(myName).trim();
+                return msg.sender_name === myName;
             }
         });
 
-        console.log("Шүүж дууссаны дараах мессежүүд:", myMessages);
-
         if (myMessages.length === 0) {
-            listEl.innerHTML = `<div class="no-msg">
-                Танд мессеж олдсонгүй.<br>
-                <small>Таны нэр: "${myName}"</small><br>
-                <small>Supabase-д байгаа нэрүүдтэй таарахгүй байна.</small>
-            </div>`;
+            listEl.innerHTML = `<div class="no-msg">Танд мессеж олдсонгүй. <br> <small>Нэр: ${myName}</small></div>`;
         } else {
             listEl.innerHTML = myMessages.map(msg => `
                 <div class="message-card">
                     <div class="msg-header">
                         <span>${currentTab === 'received' ? 'Хэнээс: ' + msg.sender_name : 'Хэнд: ' + msg.receiver_name}</span>
-                        <span>${new Date(msg.created_at).toLocaleString('mn-MN')}</span>
+                        <span>${new Date(msg.created_at).toLocaleString()}</span>
                     </div>
-                    <div class="msg-title">Зарын нэр: ${msg.ads?.title || "Гарчиггүй зар"}</div>
+                    <div class="msg-title">Зар: ${msg.ads?.title || "Гарчиггүй"}</div>
                     <div class="msg-text">${msg.message_text}</div>
                 </div>
             `).join("");
         }
     } catch (err) {
-        console.error("Алдаа гарлаа:", err);
-        listEl.innerHTML = `<div class="no-msg">Алдаа: ${err.message}</div>`;
+        console.error(err);
+        listEl.innerHTML = `<div class="no-msg">Алдаа гарлаа.</div>`;
     } finally {
         loadingEl.style.display = "none";
     }
@@ -86,13 +74,4 @@ function switchTab(tab) {
     loadMessages();
 }
 
-// Хуудас нээгдэхэд ажиллуулах
 loadMessages();
-if (currentTab === 'received' && data.length > 0) {
-    // Надад ирсэн бүх уншаагүй мессежүүдийг "Уншсан" болгох
-    await supabaseClient
-        .from('messages')
-        .update({ is_read: true })
-        .eq('receiver_name', myName)
-        .eq('is_read', false);
-}

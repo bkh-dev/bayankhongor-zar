@@ -352,9 +352,14 @@ function showNotFound(msg = "Зар олдсонгүй") {
 if (closeContactModal) closeContactModal.onclick = () => contactModal.classList.remove("show");
 window.onclick = (e) => { if (e.target === contactModal) contactModal.classList.remove("show"); };
 
+// detail.js доторх sendMessageBtn.onclick хэсгийг үүгээр соль:
 if (sendMessageBtn) {
   sendMessageBtn.onclick = async function () {
-    if (!requireAuth("Мессеж илгээхийн тулд нэвтэрнэ үү.")) return;
+    const myName = getCurrentUsername().trim(); // Хоосон зайг арилгах
+    if (!myName) {
+      showToast("Нэвтэрсэн байх шаардлагатай", "error");
+      return;
+    }
 
     const msgText = buyerMessageInput ? buyerMessageInput.value.trim() : "";
     if (!msgText) {
@@ -362,42 +367,39 @@ if (sendMessageBtn) {
       return;
     }
 
-    // Зарын мэдээллийг авах (Худалдагчийн нэр хэрэгтэй)
     const adId = getAdIdFromUrl();
-
-    // Түр хүлээлгэх төлөв
     sendMessageBtn.disabled = true;
     sendMessageBtn.textContent = "Илгээж байна...";
 
     try {
-      // 1. Одоогийн зарын мэдээллийг дахин шалгаж худалдагчийн нэрийг авах
+      // Зарын мэдээллийг авч худалдагчийн нэрийг тодорхойлох
       const { data: adData } = await supabaseClient
         .from("ads")
         .select("seller_name")
         .eq("id", adId)
         .single();
 
-      // 2. Supabase-рүү мессежийг илгээх
+      const receiver = adData?.seller_name ? adData.seller_name.trim() : "Хэрэглэгч";
+
       const { error } = await supabaseClient
         .from("messages")
         .insert([{
           ad_id: adId,
-          sender_name: getCurrentUsername(),
-          receiver_name: adData?.seller_name || "Хэрэглэгч",
-          message_text: msgText
+          sender_name: myName,
+          receiver_name: receiver,
+          message_text: msgText,
+          is_read: false
         }]);
 
       if (error) throw error;
 
       showToast("Мессеж амжилттай илгээгдлээ", "success");
-
-      // Модалыг хаах, цэвэрлэх
-      if (contactModal) contactModal.classList.remove("show");
-      if (buyerMessageInput) buyerMessageInput.value = "";
+      contactModal.classList.remove("show");
+      buyerMessageInput.value = "";
 
     } catch (error) {
       console.error("Message error:", error);
-      showToast("Мессеж илгээхэд алдаа гарлаа", "error");
+      showToast("Илгээхэд алдаа гарлаа", "error");
     } finally {
       sendMessageBtn.disabled = false;
       sendMessageBtn.textContent = "Илгээх";

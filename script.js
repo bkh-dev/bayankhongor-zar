@@ -2027,6 +2027,31 @@
         if (state.viewMode === "favorites") el.showFavoritesBtn.classList.add("active");
     }
 
+    async function checkNewMessages() {
+        const myName = getCurrentUsername();
+        if (!myName) return;
+
+        const { count, error } = await supabaseClient
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('receiver_name', myName.trim())
+            .eq('is_read', false);
+
+        const badge = document.getElementById("msgBadge");
+        if (badge) {
+            if (!error && count > 0) {
+                badge.textContent = count;
+                badge.style.display = "inline-block";
+            } else {
+                badge.style.display = "none";
+            }
+        }
+    }
+
+    // 20 секунд тутамд шалгана
+    setInterval(checkNewMessages, 20000);
+    checkNewMessages();
+
     init();
     syncTopModeButtons();
 })();
